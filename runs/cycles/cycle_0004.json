@@ -1,0 +1,165 @@
+{
+ "cycle": 4,
+ "finished": "2026-10-12T13:29:24+00:00",
+ "direction_note": "Cycle 4: scrapped jpy_cross_losscut_after_us_shock with its lesson (conditional NY-to-Tokyo continuation in yen crosses is dead; the crosses bounce in the Tokyo morning after a US selloff; the mirror long is a data-snooped flip and is never to be registered). Two new hypotheses, both revised per the Critic before any run, built, code-approved and killed at stage A. (1) fx_volume_climax_reversal: fade a one-day shock move on EURUSD only when tick volume is a climax (forced liquidation fingerprint), control arm v=0 with no volume filter. Result: the control shows shock days on EURUSD CONTINUE, not reverse (fading loses -0.10 R, t -2.5 on 245 design trades at k=1.0, -0.18 R at k=1.25), so cross_zfade's lesson extends to majors at the one-day horizon; the volume filter only softens the loss (v=1.3: -0.08 to -0.21 R on 43-46 trades) and the v=1.5 cells hold 10-16 trades and cannot be read. Lesson for the scrap index: Dukascopy tick volume is summed quoted size, its 20-day ratio rarely exceeds 1.7 even on crisis days, and at feasible thresholds it does not turn post-shock continuation into reversal; do not reuse tick volume as a capitulation signal on FX. The pooled stage B never ran, so the clustered multi-market question is unanswered but not worth another trial at these sample sizes. (2) gold_autumn_physical_demand: Baur's autumn effect (long gold in September and November) out of sample with an all-other-months control. Result: the published months LOST in design (-0.04 R per 23-hour trade, t -1.9 on 275 trades; Sep-Nov -0.036 R, t -2.2) while the rest-of-year control is flat (0.000 R), so the autumn effect did not survive 2010-2017 and reversed sign; lesson: gold calendar-month seasonals are dead for this programme. Process notes: the Builder was sent back twice on the volume module because the Critic's blocker (leftover exit flags closing later trades in the hold-3 arm) was only half-fixed on the first pass; the second patch was a six-line reorder the Critic had verified on a scratch copy, so I chose the extra round over failing the slug and record the deviation here. The Director ruled mid-cycle that the volume control arm is v=0.0 after the review showed v=1.0 dropped a quarter of shock days. Direction for cycle 5: the one-day and intraday horizons are exhausted on price, clock, calendar, cross-asset and volume inputs. Remaining honest directions: (a) multi-day positioning effects need external data not in the store (retail positioning, options skew, swap-basis); (b) the single question most worth a cycle may be whether a new edge adds more Alpha Swing pass probability than better sizing of the existing USDJPY basket, which is a simulation task, not a hypothesis; (c) if a hypothesis is registered, prefer one with 200+ design trades per market, because every cycle-3 and cycle-4 test was underpowered at the single-market stage A gate and died there before pooling could help.",
+ "director_events": [
+  "jpy_cross_losscut_after_us_shock: scrapped by director"
+ ],
+ "director": {
+  "judgments": [
+   {
+    "slug": "jpy_cross_losscut_after_us_shock",
+    "decision": "scrap",
+    "lesson": "Conditional NY-to-Tokyo continuation in yen crosses is dead, like unconditional continuation and unconditional fades before it. Shorting AUDJPY at 08:00 JST after a US100 cash-session drop lost in every one of 12 arms in design (best -0.02 R, worst -0.16 R, t -0.6 to -2.8), and the loss grew with shock size and with the shorter 02:00 UTC exit: the crosses bounce in the Tokyo morning after a US selloff. If retail losscuts happen they are done before 08:00 JST. The mirror long is not a new hypothesis: its sign was read off this run on design and check data, so it is a data-snooped flip and must never be registered or given a holdout touch. Do not retry with NZDJPY/CADJPY stage A, other shock thresholds, USDJPY, or the US500 aux.",
+    "notes": "Killed at GA_stage_a_floor; leak tests passed with the aux market attached, so the auxiliary-market facility is verified end to end. Two engine facts recorded for later cycles: the US100 aux feed starts 2011-09 and has no 21:00 UTC bars; JP225 has no Tokyo-morning bars in 2015-2017."
+   }
+  ],
+  "hypotheses": [
+   {
+    "slug": "fx_volume_climax_reversal",
+    "title": "Volume-climax capitulation reversal: fade a one-day shock move only when it carries a tick-volume climax (forced liquidation), on FX majors, yen crosses and gold, 1-3 day hold",
+    "family": "liquidity_provision_capitulation",
+    "rationale": "Large one-day moves come in two kinds. Informed repricing (a data surprise, a central bank shift) is absorbed over days and tends to continue, which is why fading 2-sigma moves on crosses lost (cross_zfade: moves kept running) and why unfiltered big-down-day buying on gold was zero (index_meanrev gold rows MR1-MR4 and MR9-MR10, all about 0 R in design). Forced liquidation is different: stop cascades, margin calls and risk-limit cuts (CTAs, retail margin books, option dealers delta-hedging through strikes) sell or buy regardless of value, and the inventory is absorbed by dealers and liquidity providers who are compensated by a reversal over the following one to three days (Nagel 2012 'Evaporating liquidity'; the classic Grossman-Miller liquidity-provision return). The two kinds cannot be told apart from price alone, but forced liquidation leaves a fingerprint that no prior test in this programme has used: tick volume far above its recent level. Dukascopy tick volume per bar is in the data for every market (m.vol); its raw scale shifts between years and has rare near-zero days, so it is only usable as a ratio to its own trailing 20-day mean, which this spec uses. The hypothesis is therefore conditional: a shock day (|close-to-close move| >= k x ATR20) with volume >= v x its 20-day mean reverses; the same shock day without the volume climax does not. The v = 1.0 arm is the control (every shock day, no volume condition) and must stay near zero; a real effect shows as a monotone rise of avg R with v. Costs are negligible at this horizon: the fill is at 20:00 UTC, before the 17:00 New York rollover widens spreads, against a stop of one ATR20 (EURUSD 0.35 pips spread and 0.4 pips slippage against a 75-pip stop, about 0.01 R; gold about 0.02 R). Expected sample: shock days at k = 1.5 are about 8% of days, so 150-170 design days per market before the volume filter and 40-70 after it; pooling six markets in stage B and the check period gives the power that one market lacks.",
+    "markets": [
+     "EURUSD",
+     "GBPUSD",
+     "AUDUSD",
+     "USDJPY",
+     "AUDJPY",
+     "XAUUSD"
+    ],
+    "aux_markets": [],
+    "timeframe": "H1",
+    "rules": "All times UTC. Bars: H1 on each market. Bars are sparse; locate by timestamp.\n\nDAILY REFERENCE CLOSE: for each UTC date D, let E(D) be the last H1 bar whose close time is at or before 20:00 UTC on D and after 16:00 UTC on D (so a stale bar cannot stand in for the US afternoon close). If no such bar exists, D is not a signal day. C(D) = bid_c[E(D)].\n\nSHOCK MOVE: ret(D) = C(D) - C(D_prev), where D_prev is the most recent earlier UTC date with a valid E(D_prev) and D - D_prev <= 4 calendar days. ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar E(D) (the daily ATR known at the start of the trading day that contains E(D)). A shock day is |ret(D)| >= k * ATR20_prev.\n\nVOLUME CLIMAX: V(D) = sum of m.vol over all H1 bars with close time in (20:00 UTC on D_prev, 20:00 UTC on D]. Vbar(D) = mean of V over the 20 most recent earlier signal-eligible dates (dates with a valid E and a valid V), all strictly before D. Require Vbar(D) > 0 and V(D) finite. Volume condition: V(D) >= v * Vbar(D). v = 1.0 is the control arm (every shock day qualifies).\n\nENTRY: on bar E(D), if the day is a shock day and the volume condition holds and the weekday of D is Monday to Friday: if ret(D) < 0 set entry_long[E(D)] = True, else set entry_short[E(D)] = True (fade the day's move). entry_type 0 (market at the next bar's open), valid_bars 1. One signal per date; the executor ignores new entries while a position is open.\n\nSTOP: sl_dist[E(D)] = sl_atr * ATR20_prev; no trade if NaN or <= 0. tp_dist = NaN.\n\nEXIT: time exit after hold_days: set exit_long/exit_short = True on bar E(D + hold_days) where D + hold_days means the hold_days-th later UTC date that has a valid E (skipping weekends and dateless days); the executor closes at the following bar's open. Safety net: max_bars[E(D)] = 24 * (hold_days + 3) H1 bars.\n\nNo other filters, no pyramiding, no re-entry while a position is open.",
+    "params": {
+     "k": 1.5,
+     "v": 1.75,
+     "sl_atr": 1.0,
+     "hold_days": 1
+    },
+    "grid": {
+     "k": [
+      1.5,
+      2.0
+     ],
+     "v": [
+      1.0,
+      1.75,
+      2.5
+     ],
+     "hold_days": [
+      1,
+      3
+     ]
+    },
+    "stage_a_market": "EURUSD",
+    "pre_registered": {
+     "expected_design_t_min": 1.5,
+     "expected_avg_r": 0.08,
+     "min_trades_design_per_market": 40,
+     "kill_if": "(1) Stage A best design avg R on EURUSD <= 0 or design t < 1. (2) Volume is the mechanism: at the same k and hold, avg R must rise with v (v = 2.5 >= v = 1.75 >= v = 1.0, violations of more than 0.02 R at any step are a kill), and the best filtered arm (v >= 1.75) must beat the v = 1.0 control arm at the same k and hold by at least 0.04 R in design; if the control arm is as good as the filtered arms the result is plain reversal, already measured as about zero, and the hypothesis dies regardless of sign. (3) Cross-market: in stage B at the chosen combination at least four of the six markets must be positive in design. (4) Regime: the check period must be positive with 2020 removed (2020 supplies a disproportionate share of shock days). Honest expectations: per-market design samples are 40-70 trades at v = 1.75, so single-market design t is 1.0-1.5; the pooled stage B and the check period (about 300+ pooled check trades) carry the evidence. A design t below 1 on EURUSD is a kill as written."
+    },
+    "similar_prior": [
+     "prior_cross_zfade",
+     "prior_index_meanrev",
+     "prior_fx_session_rev",
+     "prior_round_numbers"
+    ],
+    "why_different": "Every prior reversal test in the programme conditions on price alone: multi-day z-scores on range crosses (cross_zfade), close-to-close big-down-day and RSI(2) dip-buys on indices and gold (index_meanrev MR1-MR10, gold about 0 R in design), intraday Asia-extreme fades (fx_session_rev), and intraday sweeps and Asian fades in the pattern searches. None used tick volume, which is the only observable in this data that separates forced liquidation from informed repricing. This is a liquidity-provision hypothesis with a built-in control (v = 1.0 reproduces the already-measured plain reversal and must stay near zero) and a monotone-in-volume prediction, on FX majors where daily reversal has never been tested here, at a horizon and fill time where costs are about 0.01-0.02 R.",
+    "parent_slug": null
+   },
+   {
+    "slug": "gold_autumn_physical_demand",
+    "title": "Gold autumn effect out of sample: long XAUUSD on every trading day of September-October (Indian festival and wedding-season physical demand), daily entries",
+    "family": "seasonal_physical_demand_metal",
+    "rationale": "Baur (2013, 'The autumn effect of gold price returns') documents on 1980-2010 data that gold's positive returns concentrate in September and November, and attributes it to physical demand: Indian jewellery buying for the Diwali and wedding season (India was 25-30% of world gold jewellery demand through the 2010s, and dealers restock from August to October), Chinese demand ahead of the October Golden Week, and central-bank and investor hedging into the fourth quarter. The buyers are price-insensitive on the calendar (weddings and festivals do not move), the sellers are bullion banks and ETFs that lean on the flow, and the pressure shows up as a positive drift over the season rather than at a clock time, which is why the flow atlas's intraday windows (which scanned gold by clock and day type, not by month) could not see it. This programme's data starts in 2010, so 2010-2017 is a clean out-of-sample test of a published pre-2010 anomaly, and 2018-2023 a second one. The structure is daily entries at 20:00 UTC with a 24-hour hold and a wide stop, so each trading day in the window is one trade and the sample is about 40 trades a year; the effective independent sample is still eight seasons in design, which is why the pre-registered t is modest. A control window is pre-registered inside the grid: March-April, the season Baur finds weakest, must not show the same drift. Costs are about 0.01 R per trade (33 pips of spread plus slippage against a 2 x ATR20 stop of about 4500 pips).",
+    "markets": [
+     "XAUUSD"
+    ],
+    "aux_markets": [],
+    "timeframe": "H1",
+    "rules": "All times UTC. Bars: H1 on XAUUSD. Bars are sparse; locate by timestamp.\n\nDAILY SIGNAL BAR: for each UTC date D, let E(D) be the last H1 bar whose close time is at or before 20:00 UTC on D and after 16:00 UTC on D. If none exists, no trade on D.\n\nWINDOW: window is a string parameter with three allowed values: \"sep_oct\" = D in September 1 to October 31 inclusive; \"sep_nov\" = D in September 1 to November 30 inclusive; \"mar_apr\" = D in March 1 to April 30 inclusive (the pre-registered control season). Weekday of D must be Monday to Thursday (a Friday entry would hold over the weekend; it is excluded so every trade is a 24-hour hold).\n\nENTRY: on bar E(D) inside the window: entry_long[E(D)] = True, entry_type 0 (market at the next bar's open), valid_bars 1. The executor ignores a new entry while a position is open, so if the previous day's trade is still open at that moment the day is skipped; the Builder must not work around this.\n\nSTOP: sl_dist[E(D)] = sl_atr * ATR20_prev with ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to E(D); no trade if NaN or <= 0. tp_dist = NaN.\n\nEXIT: time exit on E(D_next), the signal bar of the next UTC date that has a valid E (so the position closes at the open of the bar after it, about 24 hours after entry). Safety net: max_bars[E(D)] = 30.\n\nLongs only, no other filters.",
+    "params": {
+     "window": "sep_oct",
+     "sl_atr": 2.0
+    },
+    "grid": {
+     "window": [
+      "sep_oct",
+      "sep_nov",
+      "mar_apr"
+     ],
+     "sl_atr": [
+      1.0,
+      2.0
+     ]
+    },
+    "stage_a_market": "XAUUSD",
+    "pre_registered": {
+     "expected_design_t_min": 1.5,
+     "expected_avg_r": 0.03,
+     "min_trades_design_per_market": 150,
+     "kill_if": "(1) Design avg R for sep_oct at sl_atr = 2.0 <= 0 or design t < 1. (2) Control: the mar_apr arm must not be within 0.015 R of the sep_oct arm at the same stop in design; if it is, the drift is gold's general trend, not seasonal demand, and the hypothesis dies regardless of sign. (3) Seasons, not days: at least five of the eight design Septembers-Octobers must have a positive sum of R; a result carried by two seasons is a kill. (4) The check period 2018-2023 must be positive at the chosen combination with at least four of six seasons positive. Honest expectations: avg R per 24-hour trade is about +0.02 to +0.04 at a 2 x ATR20 stop (a daily drift of 5-10 bp against a 3% stop), so the design t over about 300 trades is about 1.0-1.7; this test is underpowered against t >= 2 and its value is as a clean out-of-sample reading of a published anomaly either way."
+    },
+    "similar_prior": [
+     "prior_flow_atlas",
+     "prior_index_meanrev",
+     "prior_trend_follow"
+    ],
+    "why_different": "The flow atlas scanned gold by clock time and day type (gotobi, month-end, holidays, weekdays) with windows of 30 minutes to 8 hours; a two-month seasonal drift is invisible to it. Gold in trend_follow was a breakout test and in index_meanrev a dip-buy; neither conditions on the calendar month. This is a confirmatory out-of-sample test of a published, mechanism-backed seasonal (Baur 2013) with a pre-registered control season and a season-count robustness rule, not a scan over months.",
+    "parent_slug": null
+   }
+  ],
+  "direction_note": "Cycle 4 scraps the losscut idea with a lesson and registers two hypotheses that use information no prior test used: tick volume (fx_volume_climax_reversal, a liquidity-provision test with the plain-reversal control built into its grid) and the calendar month on gold (gold_autumn_physical_demand, a confirmatory out-of-sample test of Baur's autumn effect with a control season). Facts that shaped the choice: (1) the two mechanisms I planned last cycle are already measured: the atlas scanned Wednesday rollover windows on every weekday (AUD falls at the 17:00 NY rollover by the forward points, paid back by swap), and gold daily dip-buying was replicated in index_meanrev (MR1-MR10 on gold, about 0 R in design). (2) Dukascopy tick volume is usable only as a ratio to its own trailing mean: raw levels shift between years (XAUUSD 2012 is on a different scale) and a few days are near zero; the volume spec normalises by a 20-day mean and the Critic should check whether the level breaks create spurious climax days. (3) Fills at the D1 open would be at the 17:00 NY rollover with wide spreads, so both specs signal on the H1 bar closing at 20:00 UTC and fill before the rollover. If the volume filter does nothing (control arm equals filtered arms), tick volume joins the scrap index as a non-informative input and should not be reused; if it works, the same fingerprint can later be tested on intraday capitulations in the cheap 13:00-15:00 UTC hours. If both fail, the remaining unmined directions are multi-day positioning effects that need external data (CFTC was tried; retail positioning and options skew are not in the store) and the question of whether any new edge is worth more to the Alpha Swing pass probability than better risk sizing of the existing USDJPY basket."
+ },
+ "critic_review": {
+  "reviews": [
+   {
+    "slug": "fx_volume_climax_reversal",
+    "verdict": "revise",
+    "reasons": [
+     "The mechanism is real and new to this programme. Liquidity provision after forced liquidation (Grossman-Miller, Nagel 2012) is a stated economic reason, not indicator soup. No prior test conditioned on volume. The v = 1.0 control arm and the monotone-in-v prediction make it falsifiable. It is not a duplicate of prior_cross_zfade or prior_index_meanrev under rule 8, provided the volume arms carry the result.",
+     "The registered thresholds give almost no trades. I counted only how often the conditions occur in 2010-2017, using 20:00-UTC-to-20:00-UTC days, ATR20 of prior true ranges and the 20-day volume ratio. I looked at no returns or outcomes. Shock days at k = 1.5 number 49-64 per market in design (about 2.5-3% of weekdays), not the 150-170 the rationale assumes (8% of days is roughly the k = 1.0 rate). With v = 1.75 only 2-8 shock days per market survive: EURUSD 2, GBPUSD 2, AUDUSD 2, USDJPY 6, AUDJPY 2, XAUUSD 8. With v = 2.5 there are 0-3. The registered minimum of 40 design trades per market cannot be met by any filtered arm, and the monotonicity kill rule would compare noise across arms of 0-8 trades.",
+     "The volume series is Dukascopy's summed bid-side quoted volume (edge/data/store.py: 'vol is bid-side tick volume'; values are quoted sizes, not traded volume). It responds only weakly to large days. In design the correlation of log(V/Vbar) with range/ATR is 0.22-0.42. The median ratio on k = 1.5 shock days is 1.15-1.26 against 1.00 on other days, and the 90th percentile on shock days is only 1.56-1.71. That is why v = 1.75 is so rare. The measure does flag known liquidation episodes and not scheduled data, which supports the mechanism. Ratios: SNB 2015-01-15 EURUSD 2.23; Brexit 2016-06-24 GBPUSD 2.41 and EURUSD 1.78; yen flash crash 2019-01-03 AUDJPY 1.79 and USDJPY 1.76; gold crash 2013-04-15 XAUUSD 2.95; NFP 2014-12-05 EURUSD 0.90; FOMC 2015-03-18 EURUSD 1.11. So the idea deserves a test with thresholds that fit how this series actually behaves.",
+     "Feasible thresholds come from the same frequency count, with no outcomes seen. Pooled over 6 markets in design: k = 1.0 gives 1048 shock days (v = 1.0), 336 (v = 1.3) and 150 (v = 1.5). k = 1.25 gives 585 / 218 / 95. Per market, k = 1.0 and v = 1.3 gives 42-67 trades, which matches the hypothesis's own target of 40-70.",
+     "Large FX days hit several markets at once. Brexit, SNB and the yen flash crash each show up in 3-5 of the six markets on the same date. Treating 6 markets x N days as independent overstates the pooled t. The kill rules lean on pooled evidence, so pooled statistics must be clustered by date.",
+     "The monotonicity kill rule as written cannot be met even if the effect is real. Per cell (one k, one hold, one market) the standard error of avg R at 20-60 trades is 0.08-0.15 R. A tolerance of 0.02 R across 8 step comparisons will fire by chance whatever the truth. The rule must be evaluated on pooled cells.",
+     "The prior is against plain reversal at this horizon. D1 AC1 is positive on EURUSD (+0.02), GBPUSD (+0.05), AUDUSD (+0.02) and XAUUSD (+0.03), and the related price-only fades are dead. Expect the v = 1.0 control to come out at or below zero. All of the edge has to come from the volume conditioning, and that is exactly what the kill rule tests. This is acceptable."
+    ],
+    "revisions": "1) Grid: k in [1.0, 1.25], v in [1.0, 1.3, 1.5], hold_days in [1, 3] (12 combinations). Defaults: k = 1.0, v = 1.3, sl_atr = 1.0, hold_days = 1. Record in the pre-registration that the thresholds were moved for sample-size feasibility from a frequency count with no outcomes examined, and that the original k = 1.5 / v = 1.75 / v = 2.5 arms were dropped because they hold 0-8 design trades per market. 2) Minimum trades: 40 per market in design at k = 1.0, v = 1.3, and 200 pooled. 3) Rewrite kill rule (2) on pooled stage-B design data (6 markets). For each v, compute avg R averaged over the four (k, hold) cells, with trades from all markets pooled. Require avg R(v = 1.5) >= avg R(v = 1.3) - 0.02, and max(avg R(1.3), avg R(1.5)) - avg R(1.0) >= 0.04. Then repeat the 0.04 gap test in the check period at the chosen (k, hold); failing it is a kill. 4) Pooled t-statistics in stage B, check and walk-forward are computed on date-clustered R: average the R of all markets that traded the same signal date into one observation, then compute t over dates. Report the unclustered figure alongside. 5) Exit timing: put the exit flag on the last bar before E(D + hold_days), not on E(D + hold_days). The trade then closes at the open of the bar that ends at 20:00 UTC on that date, and a new shock signal at E(D + hold_days) can register. With the rule as written, the executor sees the position still open when the next day's signal arrives and silently drops it. Shock days cluster, so that loses exactly the follow-on shocks. 6) Keep kill rules (1), (3) and (4) as written. Update expected numbers: per-market design t about 0.6-1.2 at 0.08 R, so stage A on EURUSD alone has a real chance of a false negative. The Director should know this before reading a stage A kill.",
+    "overfit_risk": "medium",
+    "cost_risk": "low",
+    "duplicate_of": null,
+    "notes_for_builder": "Volume: sum m.vol over H1 bars whose CLOSE time (ts + 1h, since bars are labelled by open time) lies in (20:00 UTC on D_prev, 20:00 UTC on D]. E(D) is the last bar whose close time is in (16:00, 20:00] UTC on D, so normally the bar opening 19:00. Vbar(D) is the mean of the previous 20 valid V values, strictly before D (no D in its own mean). Use a loop over dates, not bars. Skip if Vbar <= 0 or V is not finite. ret(D) uses bid_c at E(D) and E(D_prev), with D - D_prev <= 4 calendar days. ATR: daily.to_bars(F.atr_prev(daily, 20)) read at index E(D); E(D) at 19:00-20:00 UTC lies inside the NY trading day that started the previous evening, so atr_prev is already shifted. Signal on bar E(D): entry_long if ret < 0, entry_short if ret > 0, entry_type 0, valid_bars 1, sl_dist = sl_atr * ATR, tp NaN, max_bars = 24 * (hold_days + 3). Exit flag goes on index X - 1, where X = E of the hold_days-th later valid date (the oracle pattern exit_long[xi - 1]), and only if X - 1 > E(D). Monday windows include Friday-evening and Sunday-open hours. Accept this as specified; do not renormalise. XAUUSD has artefact minutes holding up to 91% of a day's volume. Do not filter them (no new knobs), but list the dates of the XAUUSD climax trades in the stage C report so artefact-driven signals can be seen. Weekday of D must be Mon-Fri. No other filters."
+   },
+   {
+    "slug": "gold_autumn_physical_demand",
+    "verdict": "revise",
+    "reasons": [
+     "This is not a duplicate of prior_flow_atlas. I checked run_flow_atlas.py: its 18 day types are weekdays, gotobi, month-start and month-end ordinals, and US, Japan and England holidays. There is no calendar-month condition, and its windows are at most 8 hours, so a two-month seasonal was outside its search space. The atlas's Bonferroni bar (t >= 3.7) covers re-slices of that space, not a single pre-registered replication of a published anomaly. prior_trend_follow and prior_index_meanrev did not condition on month either.",
+     "The primary arm does not match the published claim. The rationale cites Baur (2013) for positive returns concentrated in September and November, yet the primary window is sep_oct, which includes October and drops November. A confirmatory test must test what was published (September and November), or the replication is itself a choice made after the fact.",
+     "mar_apr is not a clean control. Indian physical demand has a second peak around Akshaya Tritiya (April-May) and the spring wedding season, so March-April is not a no-demand season under the hypothesis's own mechanism. Kill rule (2) is meant to separate seasonal demand from gold's general drift in the same years. The right comparison is every other month of the same years (the rest of the year, Mon-Thu, same 24-hour structure).",
+     "Executor mismatch that silently halves and biases the sample. The rules exit on E(D_next), so the position closes at the open of the bar after E(D_next). At the close of E(D_next) the position is still open, and the executor ignores entries while a position is open (executor.py: 'register this bar's signals (ignored while a position is open)'). Every second day is therefore skipped, and the trades fall on Mondays and Wednesdays only. The sample halves to about 150 design trades and a day-of-week pattern enters that the hypothesis never registered. The text accepts 'the day is skipped', but here it is systematic, not occasional.",
+     "Power and usefulness. By its own numbers (+0.02 to +0.04 R per trade, per-trade sd about 0.4 R at a 2 x ATR stop, about 280 trades), design t is about 1.0-1.7. It can reach the programme's t >= 2 bar only if the effect is larger than the literature suggests. Even if real, Sep + Nov at about 35 trades a year x 0.03 R is about 1 R a year, a minor contributor to a +10% phase. It is cheap and a clean out-of-sample reading of a published anomaly, so it is worth a small amount of compute. The Director should expect an honest negative or a sub-bar positive.",
+     "Long-only on gold carries luck risk. Long-only tests on rising assets pass the bar 2-8% of the time. 2024-2026 is a strong gold bull market, so a positive holdout from a long-only gold rule is weak evidence by itself. The seasonal claim must be judged as the window minus the control, in check and in the holdout, not as raw avg R.",
+     "Costs are negligible. Spread plus slippage of about 34 pips against a 2 x ATR20 stop of about 4500 pips is under 0.01 R. One night of financing at policy rate + 1% on a 2-3% stop distance is about 0.003 R."
+    ],
+    "revisions": "1) Windows: \"sep_nov_baur\" = D in September or November (the published months; primary), \"sep_nov\" = September 1 to November 30 (the broader physical-demand season), \"rest\" = every other month (January-August and December; the control). Drop sep_oct and mar_apr. Grid: window x sl_atr [1.0, 2.0] = 6 combinations. Default window = sep_nov_baur, sl_atr = 2.0. 2) Kill rule (1) moves to sep_nov_baur at sl_atr = 2.0. Kill rule (2) becomes: in design, avg R(sep_nov_baur) - avg R(rest) >= 0.02 at the same stop, otherwise kill regardless of sign. Kill rule (4) adds: in check, avg R(window) - avg R(rest) > 0 at the chosen combination. If promoted, the holdout verdict must also report the window-minus-rest difference, and a holdout where the window does not beat the rest is a fail even if raw avg R > 0. Pre-register this now. 3) Kill rule (3), seasons not days: at least 5 of 8 design seasons (Sep + Nov R sum per year) positive. Keep it. 4) Exit: set exit_long on the last bar before E(D_next), not on E(D_next). The trade then closes at the open of the bar ending at 20:00 UTC on D_next (about a 23-hour hold), the position is flat when the next day's signal registers at E(D_next), and every Mon-Thu day in the window trades. Minimum design trades: 250 for sep_nov_baur. 5) Update expectations: design t 1.0-1.7 is accepted as below the pass bar. Register that a pass needs design t >= 2, which this test reaches only if the effect is stronger than published.",
+    "overfit_risk": "medium",
+    "cost_risk": "low",
+    "duplicate_of": null,
+    "notes_for_builder": "H1 bars are labelled by open time. E(D) is the last bar on UTC date D whose close (ts + 1h) is in (16:00, 20:00] UTC, normally the bar opening 19:00. Window membership uses the UTC month of D. window is a string param read from p['window'], with values sep_nov_baur (months 9 and 11), sep_nov (months 9-11) and rest (months 1-8 and 12); raise on any other value. Weekday of D must be Mon-Thu. ATR: daily.to_bars(F.atr_prev(daily, 20))[E(D)]; skip if NaN or <= 0. Entry: entry_long[E(D)] = True, type 0, valid_bars 1, sl_dist = sl_atr * ATR, tp NaN, max_bars = 30. Exit: let X = E(D_next), where D_next is the next UTC date with a valid E (any weekday, including Friday). Set exit_long[X - 1] = True only if X - 1 > E(D) (oracle pattern exit_long[xi - 1]). Do not add an entry on Fridays or weekends. Loop over dates, not bars. No other filters."
+   }
+  ]
+ },
+ "overview": {
+  "hypotheses": {
+   "rejected": 4,
+   "scrap": 29
+  },
+  "trials": 114,
+  "holdout_touches": 0,
+  "spend_usd": 0.0
+ },
+ "goal_reached": false
+}

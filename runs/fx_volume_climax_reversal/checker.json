@@ -1,0 +1,78 @@
+{
+ "static": {
+  "ok": true,
+  "issues": []
+ },
+ "import": {
+  "ok": true,
+  "error": null,
+  "path": "D:\\Traders sir\\strategies\\auto\\fx_volume_climax_reversal.py"
+ },
+ "dynamic": {
+  "ok": true,
+  "issues": [],
+  "entries": 97,
+  "leak": {
+   "ok": true,
+   "truncation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43673,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78612,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "perturbation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43673,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 43673,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78612,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78612,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "determinism": {
+    "ok": true,
+    "mismatches": 0,
+    "first_mismatch": -1,
+    "fields": ""
+   },
+   "n_entries": 97,
+   "aux_markets": []
+  }
+ },
+ "ok": true
+}

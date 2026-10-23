@@ -1,0 +1,53 @@
+{
+ "slug": "vix_state_tokyo_box_breakout",
+ "title": "Implied-volatility state for the USDJPY Tokyo-open box breakout: does the global risk gauge add to the approved realised-vol filter?",
+ "family": "vol_state_parked_leg_box",
+ "rationale": "The parked basket's largest leg is the Tokyo-open box breakout (05:00-05:59 IST box, stop orders at 06:00 IST, 1 x box stop, 9 x target). It is traded only when the pair's own ATR20 is above its 250-day median (the approved realised-vol filter), because breakouts follow through when the overnight New York positioning is being unwound in size at the Tokyo open and the target is far relative to the box. Realised ATR lags the state it measures; the CBOE VIX close, published before the Tokyo open, is a forward-looking gauge of the same risk-transfer activity (global de-risking and re-risking of carry and equity books that is executed through USDJPY in the Tokyo morning). Who trades: Japanese institutions and foreign macro desks adjusting yen exposure at the Tokyo open after a US session; who is on the other side: the box-range liquidity providers whose stops sit at the box edges. The question is pre-registered as incremental: a VIX-high state must beat the approved ATR filter, not just the unfiltered box. The implied-vol series is one of the two external dimensions not yet measured; the carry work used monthly VIX gates only. The engine version is the first trade of the day without the approved break-even move and without the re-entry (the Signals contract cannot express the path-dependent re-entry, and break-even is a run-level option the pipeline does not set), so absolute R is lower than the approved leg's; every arm shares these mechanics, so the state comparison is clean.",
+ "markets": [
+  "USDJPY"
+ ],
+ "aux_markets": [],
+ "ext_series": [
+  "vol"
+ ],
+ "timeframe": "M1",
+ "rules": "Box day: every weekday with at least p['min_box_bars'] traded bars whose open time is in [p['box_start_utc'], p['order_utc']) UTC (23:30 to 00:29 UTC = 05:00-05:59 IST; IST has no daylight saving). box_high = max bid_h, box_low = min bid_l over those bars; box = box_high - box_low; spread = ask_c - bid_c of the signal bar. Signal bar = the last bar whose close time is at or before p['order_utc'] (00:30 UTC) on that date; it must close at or after 00:30 UTC minus 5 minutes (skip the day otherwise).\nOrders (both placed on the signal bar, an OCO pair by contract): entry_type stop; entry_price_long = box_high; entry_price_short = box_low; sl_dist = box + spread (must be > 0); tp_dist = p['rr'] x sl_dist; valid_bars = the number of bars from the bar after the signal bar up to and including the last bar whose open time is before p['expiry_utc'] (05:30 UTC = 11:00 IST) on that date (count by timestamps, bars are sparse; at least 1); max_bars 0 (the trade runs until stop or target, overnight allowed); no re-entry; one position at a time (a new day's orders are ignored while a trade is open, by contract).\nState at the signal bar (closed-bar information only): ATR filter 'atr': ATR20 = F.atr_prev(F.daily_bars(m), p['atr_n']) known at the day start, and atr_state = ATR20 >= median of the previous p['atr_window'] daily ATR20 values (the approved filter; needs p['atr_window'] prior values). VIX state: v = F.ext_series(m, 'vol') column 'vix' (NaN rows dropped); row-wise causal percentile pct_j = 100 x share of the last min(p['vix_window'], available) VIX closes up to and including row j that are <= vix_j, defined only once at least p['vix_min_obs'] closes exist; mapped to bars with the ext_asof rule (last row with ts_avail <= bar close; the VIX close is usable from 21:30 UTC, so the 00:30 UTC signal sees the previous US session's close). Arms (p['state']): 'all' = no state; 'atr' = atr_state; 'vix_hi' = pct >= p['vix_pct']; 'vix_lo' = pct <= 100 - p['vix_pct'] (mirror control); 'atr_vix' = atr_state and pct >= p['vix_pct']. Days with an undefined state are skipped in every arm except 'all'.\nGrid: spec grid (hypothesis arms only) state [vix_hi, atr_vix] x vix_pct [70, 85] = 4 cells; the stage A grid adds state [all, atr, vix_lo] at the same vix_pct values (the Director amends specs/auto/<slug>.json after the Critic review; 'all' and 'atr' repeat over vix_pct). Compare quantised quantities with a 1e-9 relative tolerance. Start p['start'].",
+ "params": {
+  "state": "vix_hi",
+  "vix_pct": 70,
+  "rr": 9.0,
+  "vix_window": 250,
+  "vix_min_obs": 120,
+  "atr_n": 20,
+  "atr_window": 250,
+  "box_start_utc": "23:30",
+  "order_utc": "00:30",
+  "expiry_utc": "05:30",
+  "min_box_bars": 30,
+  "start": "2010-01-01"
+ },
+ "grid": {
+  "state": [
+   "vix_hi",
+   "atr_vix"
+  ],
+  "vix_pct": [
+   70,
+   85
+  ]
+ },
+ "stage_a_market": "USDJPY",
+ "pre_registered": {
+  "expected_design_t_min": 2.0,
+  "expected_avg_r": 0.12,
+  "min_trades_design_per_market": 300,
+  "expected_trades_per_month": 6.0,
+  "kill_if": "In design on USDJPY, read from every stage A cell in research.sqlite: the best vix_hi cell (by design t) does not exceed the 'atr' arm's avg R by at least +0.05 R, or does not exceed it in both halves 2010-2013 and 2014-2017; or atr_vix does not exceed 'atr' by at least +0.05 R at the same vix_pct; or vix_lo is at least as good as vix_hi at the same vix_pct (then the VIX level is not the state); or the best vix cell has fewer than 300 design trades. 'all', 'atr' and 'vix_lo' are reference arms and are never promoted; a vix_lo > vix_hi result is never registered as a low-vol hypothesis. Speed: the approved leg scores about 0.6 (0.16-0.20 R on 10 trades a month); a state that halves the trades cannot raise the score unless it removes losers, so this leg tests whether implied vol improves the basket's Sharpe, not whether it reaches 0.7 alone."
+ },
+ "similar_prior": [
+  "prior_box_breakouts and the gj-strat box family (usdjpy_grid, usdjpy_boxfilter, box_dd_filters, costs_gotobi vol filter: realised-ATR gating is the approved filter)",
+  "prior_index_vol_timing and fx_carry crash-risk switches (monthly VIX gates on index and carry portfolios)"
+ ],
+ "why_different": "No prior test used an implied-volatility state on the Tokyo-open box; the realised-ATR filter is the control, so only the increment of the forward-looking gauge is being measured; the horizon is the approved intraday-to-overnight box trade, not a monthly portfolio.",
+ "parent_slug": null
+}

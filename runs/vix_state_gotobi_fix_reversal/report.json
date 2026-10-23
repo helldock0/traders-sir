@@ -1,0 +1,984 @@
+{
+  "slug": "vix_state_gotobi_fix_reversal",
+  "title": "Implied-volatility state for the gotobi Tokyo-fix short: does the global risk gauge add to the approved realised-vol filter?",
+  "family": "vol_state_parked_leg_gotobi",
+  "started": "2026-10-14T06:07:36+00:00",
+  "spec": {
+    "slug": "vix_state_gotobi_fix_reversal",
+    "title": "Implied-volatility state for the gotobi Tokyo-fix short: does the global risk gauge add to the approved realised-vol filter?",
+    "family": "vol_state_parked_leg_gotobi",
+    "rationale": "The gotobi short (sell USDJPY at the 09:55 JST fix on settlement days, exit 06:00 UTC, stop 0.25 x ATR20) earns the post-fix reversal of the importer USD demand that banks front-run into the fix; the approved version trades it only when ATR20 is above its 250-day median. Testable claim (narrowed at the Critic's review): global risk appetite, proxied by the CBOE VIX close published before the Tokyo open, changes the size of the front-run inventory that dealers unwind after the fix, so the post-fix reversal is larger on VIX-high days. VIX is not a forward-looking gauge of USDJPY risk in design (ATR-high and VIX-high shares diverge by year; the two trailing-year percentiles correlate 0.09 on gotobi days), which is what makes the increment identifiable and not a relabelled ATR filter. Under the 60-day goal the only gate that can raise this leg's speed is the union ATR-high or VIX-high (320 design trades, 3.8 a month, against 219 and 2.6 for the approved filter), and it helps only if the VIX-high days it adds beat the ATR-low days it leaves out; a 2 x 2 ATR x VIX table measures that, and a non-gotobi placebo separates a fix-specific effect from a VIX-conditioned Tokyo-morning drift (yen crosses bounce in the Tokyo morning after US selloffs, cycle 3). This is a measurement with a modest prior, not a likely edge: even a positive result adds a few hundredths to the basket's monthly Sharpe of 0.4.",
+    "markets": [
+      "USDJPY"
+    ],
+    "timeframe": "M1",
+    "strategy_path": "strategies\\auto\\vix_state_gotobi_fix_reversal.py",
+    "params": {
+      "state": "atr_or_vix",
+      "vix_pct": 50,
+      "entry_utc": "00:55",
+      "exit_utc": "06:00",
+      "sl_atr": 0.25,
+      "max_delay_min": 5,
+      "vix_window": 250,
+      "vix_min_obs": 120,
+      "atr_n": 20,
+      "atr_window": 250,
+      "start": "2011-01-01"
+    },
+    "grid": {
+      "state": [
+        "atr_or_vix"
+      ],
+      "vix_pct": [
+        50
+      ]
+    },
+    "stage_a": {
+      "market": "USDJPY",
+      "grid": {
+        "state": [
+          "all",
+          "atr",
+          "atr_vix",
+          "atr_vixlo",
+          "natr_vix",
+          "natr_vixlo",
+          "atr_or_vix",
+          "ng_vix",
+          "ng_vixlo"
+        ],
+        "vix_pct": [
+          50
+        ]
+      }
+    },
+    "pre_registered": {
+      "expected_design_t_min": 2.0,
+      "expected_avg_r": 0.15,
+      "min_trades_design_per_market": 300,
+      "expected_trades_per_month": 3.8,
+      "kill_if": "Read from every stage A cell in research.sqlite (the report keeps the top 15 rows); the GA floor and this rule apply to 'atr_or_vix' and the strata, never to 'all' or 'atr'. K1: the stratified VIX effect E = w_A x (R[atr_vix] - R[atr_vixlo]) + w_N x (R[natr_vix] - R[natr_vixlo]), weights = each ATR stratum's share of the common sample, must be at least +0.10 R in design (about one SE) with both within-stratum differences above 0. K2: the union's design t must exceed the 'atr' arm's design t (same period), and R[natr_vix] must exceed R[natr_vixlo] (otherwise the union looks faster only because ATR-low gotobi days happened to be positive in design). K3: the gotobi VIX effect (trade-weighted over the strata) must exceed the placebo effect (R[ng_vix] - R[ng_vixlo]) by at least +0.05 R; if the placebo effect is as large, the result is a VIX-conditioned Tokyo-morning drift: nothing is registered as a gotobi refinement and its sign is never used to register a standalone VIX short (a snooped flip; the US-shock-to-Tokyo family is dead). K4: before anything is adopted, from the same cells' check rows: E above 0 in check 2018-2023 and the union's check t at least the 'atr' arm's check t (the stage C gates cannot fail a gotobi subset). K5: report E gross and net of costs with month-clustered SEs; a VIX-low result is never registered as a low-vol hypothesis. Expectations: union about 3.8 trades a month (320 design trades, minimum 300); E between 0 and +0.10 R; union score 0.27-0.33 if E > 0 against 0.27 for the approved vol-gotobi; a null is recorded as 'no VIX effect larger than about 0.2 R on the gotobi', not as 'implied vol closed'; the design SE of E is about 0.10 R and VIX-high days come in about 90 episodes, so trades within an episode are not independent."
+    },
+    "costs": {},
+    "notes": "Base trade exactly as strategies/oracle/gotobi_short.py: weekdays from p['start'] (2011-01-01); SELL USDJPY at market at the first bar at or after p['entry_utc'] (00:55 UTC) within p['max_delay_min'] minutes; exit at the open of the first bar at or after p['exit_utc'] (06:00 UTC) the same day; stop = p['sl_atr'] x ATR20 (F.atr_prev(F.daily_bars(m), p['atr_n'])), no target; one position at a time; keep the oracle's guards (ei < 1, xi >= m.n, xi <= ei, ATR not finite or not positive).\nDay sets: gotobi days = F.is_gotobi(dates) for every state except the placebo states, which use the non-gotobi weekdays.\nStates at the signal bar (ei - 1): ATR state exactly as the oracle's vol filter: med[i] = nanmedian of atr_d[i - w + 1 : i + 1] with w = p['atr_window'] (the previous 250 daily ATR20 values including the current), ATR-high = ATR20 >= med, ATR-low otherwise, undefined where med is NaN. VIX state: e = F.ext_series(m, 'vol'); sub = F.ext_subset(m, 'vol', np.isfinite(e.column('vix'))) (US-holiday rows carry a ts_avail with a null vix and must be dropped before the as-of mapping); row-wise causal percentile pct[j] = 100 x mean(x[lo:j+1] <= x[j]) with lo = max(0, j - p['vix_window'] + 1), NaN if fewer than p['vix_min_obs'] closes; mapped to bars with the ext_asof rule (last row with ts_avail <= the bar's close; the VIX close is usable from 21:30 UTC, so the 00:55 UTC entry sees the previous US session's close). V+ = pct >= p['vix_pct'] - 1e-9 (VIX at or above its trailing 250-close median, the same construction as the approved ATR median rule); V- = pct < p['vix_pct'] - 1e-9, a strict complement. Return empty Signals if the VIX subset is empty (truncated leak-test samples).\nCommon sample (R1): in every arm, 'all' included, a day is traded only if both states are defined; because a gotobi trade never runs into the next day, the strata partition 'all' exactly.\nArms, p['state']: 'all'; 'atr' (ATR-high, the approved vol-gotobi); 'atr_vix' (ATR-high and V+); 'atr_vixlo' (ATR-high and V-); 'natr_vix' (ATR-low and V+); 'natr_vixlo' (ATR-low and V-); 'atr_or_vix' (ATR-high or V+, the hypothesis cell); placebo on non-gotobi weekdays with the identical short, stop and exit: 'ng_vix' (V+) and 'ng_vixlo' (V-). Unknown state: raise ValueError.\nGrids: spec grid (stages B and C, walk-forward, any holdout) = {state: ['atr_or_vix'], vix_pct: [50]}; stage A grid = {state: all nine arms, vix_pct: [50]} recorded as trials; the module GRID lists the nine arms so the checker exercises every value. The reference and placebo arms are never promoted. Expected design counts 2011-2017 (within a few days): all about 504, atr 219, atr_vix 83, atr_vixlo 136, natr_vix 101, natr_vixlo 182, atr_or_vix 320, ng_vix about 495, ng_vixlo about 817. Compare quantised quantities with a 1e-9 relative tolerance.",
+    "aux_markets": [],
+    "ext_series": [
+      "vol"
+    ]
+  },
+  "stages": {
+    "leak": {
+      "ok": true,
+      "truncation": {
+        "ok": true,
+        "probes": [
+          {
+            "k": 2613121,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 4703617,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          }
+        ]
+      },
+      "perturbation": {
+        "ok": true,
+        "probes": [
+          {
+            "k": 2613121,
+            "direction": 1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 2613121,
+            "direction": -1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 4703617,
+            "direction": 1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 4703617,
+            "direction": -1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          }
+        ]
+      },
+      "determinism": {
+        "ok": true,
+        "mismatches": 0,
+        "first_mismatch": -1,
+        "fields": ""
+      },
+      "ext_release": {
+        "ok": true,
+        "probes": [
+          {
+            "k": 1289,
+            "release": "2009-12-31T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 752797,
+            "release": "2012-01-02T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 1500014,
+            "release": "2013-12-31T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 2245457,
+            "release": "2015-12-31T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 2991866,
+            "release": "2017-12-29T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 3737543,
+            "release": "2019-12-31T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 4478610,
+            "release": "2021-12-29T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 5226211,
+            "release": "2023-12-29T21:30:00.000000",
+            "truncation_mismatches": 0,
+            "perturbation_mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          }
+        ]
+      },
+      "n_entries": 613,
+      "aux_markets": [],
+      "ext_series": [
+        "vol"
+      ]
+    },
+    "A": {
+      "market": "USDJPY",
+      "grid": {
+        "state": [
+          "all",
+          "atr",
+          "atr_vix",
+          "atr_vixlo",
+          "natr_vix",
+          "natr_vixlo",
+          "atr_or_vix",
+          "ng_vix",
+          "ng_vixlo"
+        ],
+        "vix_pct": [
+          50
+        ]
+      },
+      "combos": 9,
+      "table": [
+        {
+          "state": "all",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 936,
+          "avg_r": 0.11918127203595166,
+          "t": 3.381052385286473,
+          "total_r": 111.55367062565075,
+          "max_dd_r": 16.111999910983506,
+          "passes_bar": false,
+          "design_n": 504,
+          "design_avg_r": 0.1324624932193531,
+          "design_t": 2.6939162988215988,
+          "check_n": 432,
+          "check_avg_r": 0.10368651398864995,
+          "check_t": 2.0543674105332137
+        },
+        {
+          "state": "atr_vixlo",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 209,
+          "avg_r": 0.24559610900254225,
+          "t": 3.1649545998340565,
+          "total_r": 51.32958678153133,
+          "max_dd_r": 5.4231436445563865,
+          "passes_bar": false,
+          "design_n": 136,
+          "design_avg_r": 0.22501384002867952,
+          "design_t": 2.6829588760910585,
+          "check_n": 73,
+          "check_avg_r": 0.2839411580497386,
+          "check_t": 1.7885815040292332
+        },
+        {
+          "state": "atr_or_vix",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 613,
+          "avg_r": 0.15875155152565362,
+          "t": 3.3667968620272433,
+          "total_r": 97.31470108522568,
+          "max_dd_r": 17.597745282938405,
+          "passes_bar": false,
+          "design_n": 320,
+          "design_avg_r": 0.17264892023357695,
+          "design_t": 2.559256310095409,
+          "check_n": 293,
+          "check_avg_r": 0.14357353791973054,
+          "check_t": 2.1849872595468653
+        },
+        {
+          "state": "natr_vix",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 198,
+          "avg_r": 0.1616285227614879,
+          "t": 2.172015513374507,
+          "total_r": 32.0024475067746,
+          "max_dd_r": 13.941836381455639,
+          "passes_bar": false,
+          "design_n": 101,
+          "design_avg_r": 0.20476634572355504,
+          "design_t": 2.0905529677308254,
+          "check_n": 97,
+          "check_avg_r": 0.11671182050201581,
+          "check_t": 1.033686936266133
+        },
+        {
+          "state": "atr",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 415,
+          "avg_r": 0.15737892428542427,
+          "t": 2.6238735770856096,
+          "total_r": 65.31225357845108,
+          "max_dd_r": 10.23834656175561,
+          "passes_bar": false,
+          "design_n": 219,
+          "design_avg_r": 0.1578367742313496,
+          "design_t": 1.7989738912145175,
+          "check_n": 196,
+          "check_avg_r": 0.1568673470499261,
+          "check_t": 1.9373067747580002
+        },
+        {
+          "state": "ng_vix",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 1056,
+          "avg_r": 0.0019229659436555665,
+          "t": 0.06362178816474366,
+          "total_r": 2.0306520365002783,
+          "max_dd_r": 42.621020978475684,
+          "passes_bar": false,
+          "design_n": 495,
+          "design_avg_r": 0.0623170451645849,
+          "design_t": 1.3976901432234805,
+          "check_n": 561,
+          "check_avg_r": -0.05136592748657621,
+          "check_t": -1.2526306858371983
+        },
+        {
+          "state": "natr_vixlo",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 323,
+          "avg_r": 0.04408349702917982,
+          "t": 0.8981647079587887,
+          "total_r": 14.238969540425082,
+          "max_dd_r": 17.223023333225086,
+          "passes_bar": false,
+          "design_n": 184,
+          "design_avg_r": 0.06257305493374647,
+          "design_t": 0.9471479496982852,
+          "check_n": 139,
+          "check_avg_r": 0.019608111026012422,
+          "check_t": 0.2670125832660593
+        },
+        {
+          "state": "atr_vix",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 206,
+          "avg_r": 0.06787702328601816,
+          "t": 0.7423606486032585,
+          "total_r": 13.982666796919743,
+          "max_dd_r": 12.666601276314944,
+          "passes_bar": false,
+          "design_n": 83,
+          "design_avg_r": 0.04776350979235117,
+          "design_t": 0.2560936026932429,
+          "check_n": 123,
+          "check_avg_r": 0.08144955678174468,
+          "check_t": 0.9254062441382329
+        },
+        {
+          "state": "ng_vixlo",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 1390,
+          "avg_r": -0.03091343743376135,
+          "t": -1.2672743135939293,
+          "total_r": -42.96967803292828,
+          "max_dd_r": 53.00484786706455,
+          "passes_bar": false,
+          "design_n": 822,
+          "design_avg_r": -0.011081080434527935,
+          "design_t": -0.332425099817712,
+          "check_n": 568,
+          "check_avg_r": -0.059614489288285756,
+          "check_t": -1.695384080046575
+        }
+      ],
+      "best": {
+        "state": "all",
+        "vix_pct": "50",
+        "entry_utc": "00:55",
+        "exit_utc": "06:00",
+        "sl_atr": "0.25",
+        "max_delay_min": "5",
+        "vix_window": "250",
+        "vix_min_obs": "120",
+        "atr_n": "20",
+        "atr_window": "250",
+        "start": "2011-01-01",
+        "atr_min_obs": "30",
+        "n": 936,
+        "avg_r": 0.11918127203595166,
+        "t": 3.381052385286473,
+        "total_r": 111.55367062565075,
+        "max_dd_r": 16.111999910983506,
+        "passes_bar": false,
+        "design_n": 504,
+        "design_avg_r": 0.1324624932193531,
+        "design_t": 2.6939162988215988,
+        "check_n": 432,
+        "check_avg_r": 0.10368651398864995,
+        "check_t": 2.0543674105332137
+      }
+    },
+    "B": {
+      "USDJPY": {
+        "combos": 1,
+        "best": {
+          "state": "atr_or_vix",
+          "vix_pct": "50",
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": "0.25",
+          "max_delay_min": "5",
+          "vix_window": "250",
+          "vix_min_obs": "120",
+          "atr_n": "20",
+          "atr_window": "250",
+          "start": "2011-01-01",
+          "atr_min_obs": "30",
+          "n": 613,
+          "avg_r": 0.15875155152565362,
+          "t": 3.3667968620272433,
+          "total_r": 97.31470108522568,
+          "max_dd_r": 17.597745282938405,
+          "passes_bar": false,
+          "design_n": 320,
+          "design_avg_r": 0.17264892023357695,
+          "design_t": 2.559256310095409,
+          "check_n": 293,
+          "check_avg_r": 0.14357353791973054,
+          "check_t": 2.1849872595468653
+        },
+        "top": [
+          {
+            "state": "atr_or_vix",
+            "vix_pct": "50",
+            "entry_utc": "00:55",
+            "exit_utc": "06:00",
+            "sl_atr": "0.25",
+            "max_delay_min": "5",
+            "vix_window": "250",
+            "vix_min_obs": "120",
+            "atr_n": "20",
+            "atr_window": "250",
+            "start": "2011-01-01",
+            "atr_min_obs": "30",
+            "n": 613,
+            "avg_r": 0.15875155152565362,
+            "t": 3.3667968620272433,
+            "total_r": 97.31470108522568,
+            "max_dd_r": 17.597745282938405,
+            "passes_bar": false,
+            "design_n": 320,
+            "design_avg_r": 0.17264892023357695,
+            "design_t": 2.559256310095409,
+            "check_n": 293,
+            "check_avg_r": 0.14357353791973054,
+            "check_t": 2.1849872595468653
+          }
+        ]
+      }
+    },
+    "C": {
+      "USDJPY": {
+        "params": {
+          "state": "atr_or_vix",
+          "vix_pct": 50,
+          "entry_utc": "00:55",
+          "exit_utc": "06:00",
+          "sl_atr": 0.25,
+          "max_delay_min": 5,
+          "vix_window": 250,
+          "vix_min_obs": 120,
+          "atr_n": 20,
+          "atr_window": 250,
+          "start": "2011-01-01"
+        },
+        "stats": {
+          "design": {
+            "n": 320,
+            "avg_r": 0.17264892023357695,
+            "t": 2.559256310095409,
+            "win_rate": 0.546875,
+            "avg_win": 0.9227914358134057,
+            "avg_loss": -0.7326954951213887,
+            "profit_factor": 1.5200227232996049,
+            "total_r": 55.24765447474462,
+            "max_dd_r": 11.185445414723834,
+            "losing_streak": 6,
+            "trades_per_month": 3.3333333333333335
+          },
+          "check": {
+            "n": 293,
+            "avg_r": 0.14357353791973054,
+            "t": 2.1849872595468653,
+            "win_rate": 0.5255972696245734,
+            "avg_win": 0.8800917818560526,
+            "avg_loss": -0.6724250920528851,
+            "profit_factor": 1.4500733638196595,
+            "total_r": 42.06704661048105,
+            "max_dd_r": 17.597745282938416,
+            "losing_streak": 7,
+            "trades_per_month": 4.070373117298037
+          },
+          "all": {
+            "n": 613,
+            "avg_r": 0.15875155152565362,
+            "t": 3.3667968620272433,
+            "win_rate": 0.5367047308319739,
+            "avg_win": 0.9028043637482618,
+            "avg_loss": -0.7031969527744802,
+            "profit_factor": 1.4872851010452357,
+            "total_r": 97.31470108522568,
+            "max_dd_r": 17.597745282938405,
+            "losing_streak": 7,
+            "trades_per_month": 3.9782915778251597
+          }
+        },
+        "by_year": {
+          "2011": 9.79736049454535,
+          "2012": -2.3952732652945676,
+          "2013": 17.53305271073397,
+          "2014": 3.9453289573648247,
+          "2015": 4.819095020044667,
+          "2016": 15.013013384977185,
+          "2017": 6.535077172373196,
+          "2018": -9.828454911264716,
+          "2019": 4.331537803488401,
+          "2020": 20.07420407059381,
+          "2021": 4.534065144963325,
+          "2022": 19.841285003073633,
+          "2023": 3.114409499626596
+        },
+        "regime": {
+          "years": 13,
+          "positive_years": 11,
+          "share_positive": 0.8461538461538461,
+          "worst_year_r": -9.828454911264716,
+          "best_year_r": 20.07420407059381,
+          "worst_year": 2018
+        },
+        "walk_forward": {
+          "windows": [
+            {
+              "test_year": 2013,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 86,
+              "train_avg_r": 0.08607078173547421,
+              "train_t": 0.8311838051792184,
+              "test_n": 57,
+              "test_avg_r": 0.307597415977789,
+              "test_t": 2.1499718238300467
+            },
+            {
+              "test_year": 2014,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 143,
+              "train_avg_r": 0.17437160797192133,
+              "train_t": 2.0606211559785943,
+              "test_n": 39,
+              "test_avg_r": 0.10116228095807242,
+              "test_t": 0.5659500494712193
+            },
+            {
+              "test_year": 2015,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 182,
+              "train_avg_r": 0.1586838950403823,
+              "train_t": 2.073570620078191,
+              "test_n": 56,
+              "test_avg_r": 0.08605526821508334,
+              "test_t": 0.5166847493344181
+            },
+            {
+              "test_year": 2016,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 191,
+              "train_avg_r": 0.12514242629763817,
+              "train_t": 1.5258672963610505,
+              "test_n": 59,
+              "test_avg_r": 0.2544578539826641,
+              "test_t": 1.1480845879471797
+            },
+            {
+              "test_year": 2017,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 211,
+              "train_avg_r": 0.19578431314275188,
+              "train_t": 2.147867915979864,
+              "test_n": 23,
+              "test_avg_r": 0.28413379010318246,
+              "test_t": 1.5517351483502586
+            },
+            {
+              "test_year": 2018,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 177,
+              "train_avg_r": 0.17125714426418004,
+              "train_t": 1.691967980263389,
+              "test_n": 63,
+              "test_avg_r": -0.15600722081372564,
+              "test_t": -1.2907279348231646
+            },
+            {
+              "test_year": 2019,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 201,
+              "train_avg_r": 0.08228224212005139,
+              "train_t": 0.9029358279854947,
+              "test_n": 37,
+              "test_avg_r": 0.1170685892834703,
+              "test_t": 0.6891039365668673
+            },
+            {
+              "test_year": 2020,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 182,
+              "train_avg_r": 0.08819326071194541,
+              "train_t": 0.9450764284271863,
+              "test_n": 59,
+              "test_avg_r": 0.34024074695921713,
+              "test_t": 2.5606062915815193
+            },
+            {
+              "test_year": 2021,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 182,
+              "train_avg_r": 0.11600200074280596,
+              "train_t": 1.5642305307724889,
+              "test_n": 38,
+              "test_avg_r": 0.11931750381482434,
+              "test_t": 0.8458903327329637
+            },
+            {
+              "test_year": 2022,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 197,
+              "train_avg_r": 0.09701193963340518,
+              "train_t": 1.3776919506307832,
+              "test_n": 71,
+              "test_avg_r": 0.2794547183531498,
+              "test_t": 1.5531547325349855
+            },
+            {
+              "test_year": 2023,
+              "chosen": {
+                "state": "atr_or_vix",
+                "vix_pct": 50,
+                "entry_utc": "00:55",
+                "exit_utc": "06:00",
+                "sl_atr": 0.25,
+                "max_delay_min": 5,
+                "vix_window": 250,
+                "vix_min_obs": 120,
+                "atr_n": 20,
+                "atr_window": 250,
+                "start": "2011-01-01",
+                "atr_min_obs": 30
+              },
+              "train_n": 205,
+              "train_avg_r": 0.2379565464493618,
+              "train_t": 2.859756460616891,
+              "test_n": 25,
+              "test_avg_r": 0.12457637998506384,
+              "test_t": 0.7800411128060323
+            }
+          ],
+          "oos_n": 527,
+          "oos_avg_r": 0.1706121705046962,
+          "oos_t": 3.2687628363945427,
+          "oos_total_r": 89.9126138559749,
+          "windows_positive": 10,
+          "windows_total": 11,
+          "wf_efficiency": 1.2122328245022425
+        },
+        "stability": {
+          "best": 0.17264892023357695,
+          "neighbours": 0,
+          "neighbours_positive": 0,
+          "neighbour_mean": NaN,
+          "neighbour_ratio": NaN,
+          "share_grid_positive": 1.0
+        },
+        "cost_stress": [
+          {
+            "mult": 1.0,
+            "n": 613,
+            "avg_r": 0.15875155152565362,
+            "t": 3.3667968620272433,
+            "total_r": 97.31470108522568,
+            "check_avg_r": 0.14357353791973054,
+            "holdout_avg_r": NaN
+          },
+          {
+            "mult": 1.5,
+            "n": 613,
+            "avg_r": 0.11933144955565565,
+            "t": 2.5373976746259848,
+            "total_r": 73.15017857761691,
+            "check_avg_r": 0.10670216814205406,
+            "holdout_avg_r": NaN
+          },
+          {
+            "mult": 2.0,
+            "n": 613,
+            "avg_r": 0.07284435752046771,
+            "t": 1.5573873180560416,
+            "total_r": 44.6535911600467,
+            "check_avg_r": 0.055322658015719374,
+            "holdout_avg_r": NaN
+          }
+        ],
+        "monte_carlo": {
+          "n": 613,
+          "sims": 1000,
+          "dd_r_p50": 11.589484693894075,
+          "dd_r_p95": 19.778848121530828,
+          "dd_r_p99": 24.310450255170675,
+          "total_r_p05": 50.93183748519977,
+          "total_r_p50": 95.94209012503984,
+          "prob_total_negative": 0.001
+        },
+        "sharpe": {
+          "sr": 0.13598364448095882,
+          "skew": 2.8152164440790535,
+          "kurt": 21.81511595880676,
+          "n": 613
+        },
+        "dsr_hypothesis": {
+          "dsr": 0.9999659545862516,
+          "sr0": 0.0,
+          "z": 3.982860148964407
+        },
+        "dsr_program": {
+          "dsr": 0.01189948950036277,
+          "sr0": 0.21315729433064134,
+          "z": -2.260358999125615
+        }
+      }
+    }
+  },
+  "gates": {
+    "G0_no_leak": true,
+    "GA_stage_a_floor": true,
+    "GB_design_positive_markets": 1,
+    "G2_check_positive": true,
+    "G2b_walk_forward_positive": true,
+    "G4_cost_1_5x_positive": true,
+    "G5_sample_size": true
+  },
+  "verdict": "candidate",
+  "failing": [],
+  "pooled": {
+    "check_n": 293,
+    "check_avg_r": 0.14357353791973054,
+    "check_t": 2.1849872595468653,
+    "wf_oos_n": 527,
+    "wf_oos_avg_r": 0.1706121705046962,
+    "wf_oos_t": 3.2687628363945427
+  },
+  "warnings": {
+    "W3_stability": true,
+    "W6_dsr_hypothesis_0_9": true,
+    "W6b_dsr_program_0_5": false,
+    "W7_regime_half_years_positive": true,
+    "W8_cost_2x_positive": true
+  },
+  "soft_failures": [
+    "W6b_dsr_program_0_5"
+  ],
+  "seconds": 29.6
+}

@@ -1,0 +1,14 @@
+# tfx_daily.parquet (built 2026-10-14 by scripts/build_external_tfx_daily.py from 22 yearly CSVs)
+
+135,813 rows: one per Click 365 pair per trading day. Columns: pair (TFX code), symbol (price-store symbol or null), date (Click 365 trading day; it ends about 06:00 Tokyo the next morning, so it matches our New York-close D1 bar), prev_settle, open, high, low, close, settle, change, swap_point (yen per contract per day, long side), volume (contracts, one side), oi (total open contracts at the close), d_oi, d_oi_pct (change in oi versus the previous trading day), ret (settle / prev_settle - 1), ts_avail (= date + 1 day 00:00 UTC).
+
+Source: https://www.tfx.co.jp/historical/fx/result (HistoricalData[submit_type]=csv, one request per year, cached in data/external/tfx/raw/daily/). Open interest has no direction: the retail-flow proxy is d_oi read against ret (open interest rising on a down day = dip-buying by the structurally long Japanese retail book). The weekly long/short split in tfx.parquet (2022-11 onward) is the direct measure. Rows before a pair's listing (no quotes, zero open interest) are dropped.
+
+- 36 pairs, 135,813 rows, trading days 2005-07-01 .. 2026-10-12
+- listing (first row with open interest): AUD/JPY 2005-07-01, USD/JPY 2005-07-01, EUR/JPY 2005-07-01, GBP/JPY 2005-07-01, CAD/JPY 2005-10-24, CHF/JPY 2005-10-24, NZD/JPY 2005-10-24, USD/CHF 2008-10-27, USD/CAD 2008-10-27, SEK/JPY 2008-10-27, PLN/JPY 2008-10-27, NZD/USD 2008-10-27, NOK/JPY 2008-10-27, HKD/JPY 2008-10-27, GBP/USD 2008-10-27, GBP/AUD 2008-10-27, GBP/CHF 2008-10-27, ZAR/JPY 2008-10-27, EUR/USD 2008-10-27, EUR/CHF 2008-10-27, AUD/USD 2008-10-27, EUR/AUD 2008-10-27, EUR/GBP 2008-10-28, INR/JPY 2011-08-01, KRW/JPY 2011-08-01, CNY/JPY 2011-08-01, TRY/JPY 2015-05-11, AUL/JPY 2015-11-30, USL/JPY 2015-11-30, EUL/JPY 2015-11-30, EUL/USL 2015-11-30, GBL/JPY 2015-12-07, MXN/JPY 2017-10-30, CNH/JPY 2025-01-27, HUF/JPY 2025-01-27, CZK/JPY 2025-01-27
+- no longer quoted: CNY/JPY (last 2013-11-28), INR/JPY (last 2013-11-28), KRW/JPY (last 2013-11-28)
+- USD/JPY mean open interest by year: 2005: 6,504, 2006: 42,767, 2007: 85,503, 2008: 70,766, 2009: 104,137, 2010: 205,557, 2011: 292,958, 2012: 225,729, 2013: 209,924, 2014: 315,145, 2015: 521,611, 2016: 607,072, 2017: 551,719, 2018: 549,125, 2019: 532,037, 2020: 442,617, 2021: 371,522, 2022: 376,500, 2023: 387,386, 2024: 380,543, 2025: 373,168, 2026: 356,970
+- USD/JPY 2005-2023: corr(daily return, open-interest change) -0.18; mean OI change on down days +229.6 bp, on up days -121.0 bp (descriptive, pre-holdout only)
+- AUD/JPY 2005-2023: corr(daily return, open-interest change) -0.26; mean OI change on down days +355.0 bp, on up days -218.3 bp (descriptive, pre-holdout only)
+- EUR/USD 2005-2023: corr(daily return, open-interest change) +0.28; mean OI change on down days -100.1 bp, on up days +192.1 bp (descriptive, pre-holdout only)
+- 89,875 rows map to a price-store symbol (18 pairs)

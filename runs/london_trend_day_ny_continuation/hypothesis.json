@@ -1,0 +1,54 @@
+{
+ "slug": "london_trend_day_ny_continuation",
+ "title": "Trend-day continuation: London open-drive carries into the New York session",
+ "family": "intraday_continuation_trend_day",
+ "rationale": "On most days the London session is two-sided and its extremes revert, which is why session-reversal and box-breakout ideas died. A minority of days are trend days: a macro or CTA flow arrives at the London open and price runs one way with shallow pullbacks, closing the London morning near its extreme. Those flows are executed over the whole day by participants who must finish (funds rebalancing, systematic trend followers adding on strength, corporates with deadlines), and the New York session adds the same-direction US accounts plus the stops of early faders. The other side is counter-trend liquidity providers who are forced to cover into the New York open. The signature (large London range and a close at the extreme) is observable at 12:00 UTC, before the US participants arrive; the continuation should show up as positive drift from 12:00 to 16:00 UTC on those days only. Costs are lowest at 12 to 15 UTC on the majors (market facts), and the stop is sized to the day's own range, so R is meaningful rather than a fixed pip number.",
+ "markets": [
+  "EURUSD",
+  "GBPUSD",
+  "USDJPY",
+  "AUDUSD",
+  "USDCAD",
+  "GBPJPY"
+ ],
+ "timeframe": "M5",
+ "rules": "All times UTC. For each calendar date d (Monday to Friday): the London window is all bars with 07:00 <= ts < 12:00 on d. Let O = bid open of the first bar at or after 07:00 (skip the day if that bar is more than 15 minutes after 07:00), H = highest bid high in the window, L = lowest bid low in the window, C = bid close of the last bar before 12:00 (skip the day if that bar is more than 15 minutes before 12:00), R = H - L. ATR = previous-20-trading-day average daily range (F.atr_prev on NY-close daily bars) known at the start of the trading day that contains 12:00 UTC on d; skip the day if ATR is not available. Trend-day signature: R >= k * ATR. Direction: long if (C - L) / R >= 1 - q; short if (C - L) / R <= q; otherwise no trade. Entry: market order signalled on that last bar before 12:00, so it fills at the open of the first bar at or after 12:00 (ask for longs, bid for shorts). Stop: m * R from the fill. No take-profit. Exit: close the position at the open of the first bar at or after exit_utc (default 16:00) by setting the exit flag on the last bar before exit_utc; the stop stays live until then. One trade per day at most, no re-entry. Parameters: k (range threshold in ATR units), q (close-location fraction), m (stop in units of R), window_start = 07:00, window_end = 12:00, exit_utc = 16:00, max_delay_min = 15.",
+ "params": {
+  "k": 0.65,
+  "q": 0.25,
+  "m": 0.5,
+  "window_start": "07:00",
+  "window_end": "12:00",
+  "exit_utc": "16:00",
+  "max_delay_min": 15
+ },
+ "grid": {
+  "k": [
+   0.5,
+   0.65,
+   0.8
+  ],
+  "q": [
+   0.15,
+   0.25
+  ],
+  "m": [
+   0.5,
+   0.75
+  ]
+ },
+ "stage_a_market": "EURUSD",
+ "pre_registered": {
+  "expected_design_t_min": 2.0,
+  "expected_avg_r": 0.05,
+  "min_trades_design_per_market": 150,
+  "kill_if": "Stage A on EURUSD: best design avg R <= 0 or design t < 1. Also treat as dead if the effect exists only when m = 0.75 and k = 0.5 (the loosest corner), because that is the configuration closest to a plain afternoon-momentum bet."
+ },
+ "similar_prior": [
+  "prior_fx_session_rev",
+  "prior_box_breakouts",
+  "prior_trend_follow"
+ ],
+ "why_different": "Session-reversal tests traded the Asian extreme into London and New York and found neither reversal nor momentum on average days; box breakouts entered on the first break of a quiet range. This hypothesis trades only days that already show a one-sided London session (large range plus close at the extreme) and bets on the New York continuation of that established flow, with the stop scaled to the day's range. It is a conditional, intraday, same-day mechanism rather than a daily or multi-day trend rule.",
+ "parent_slug": null
+}

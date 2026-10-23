@@ -1,0 +1,65 @@
+{
+ "slug": "jpy_retail_dip_buying_cascade",
+ "title": "Retail dip-buying build-up in yen crosses (TFX daily open interest) and the forced-liquidation continuation",
+ "family": "retail_positioning_flow_jpy",
+ "rationale": "Japanese retail FX accounts are systematic dip-buyers of yen crosses: they add long foreign-currency positions on days the cross falls (TFX Click 365 open interest rises on down days and falls on up days: in 2010-2017 AUD/JPY open interest moved by more than 4% of itself on a quarter of down days). Positions added into a decline are underwater at once and carry thin margin; Japanese brokers run automatic loss-cut and margin-call checks around the end of the Tokyo trading day (06:00 JST) and intraday when equity falls below the maintenance level, so a further decline forces the same accounts to sell, which is a mechanical continuation flow on the next one or two sessions. Who is on the other side: dealers and leveraged funds who are short yen crosses into the decline and keep selling into retail liquidity. The information is the realised retail position build-up itself, published daily by the exchange and absent from price. Cycle 3 showed that a same-night US equity shock does not produce a Tokyo-morning continuation (the crosses bounced), so the equity-shock trigger is dead; this hypothesis uses the exchange's own daily position data as the state, holds up to two sessions to reach the next forced-liquidation window, and carries a direct control (the same decline without a position build-up). If the control equals the hypothesis cell, open interest carries no information and the family is closed.",
+ "markets": [
+  "AUDJPY",
+  "USDJPY",
+  "GBPJPY",
+  "NZDJPY",
+  "EURJPY"
+ ],
+ "aux_markets": [],
+ "ext_series": [
+  "tfx_daily"
+ ],
+ "timeframe": "M15",
+ "rules": "Data: tfx_daily rows for this market's TFX pair (select rows where e.column('symbol') == m.sym with F.ext_subset). Each row describes one TFX trading day D (08:30 JST on D to 06:00 JST on D+1): prev_settle, settle, change = settle - prev_settle in price units, d_oi_pct = open-interest change as a FRACTION of the previous open interest (0.03 = +3%), ts_avail = D+1 00:00 UTC. ATR20 = F.atr_prev(F.daily_bars(m), p['atr_n']) mapped to bars (known at the start of the New York trading day).\nState on each row, evaluated at T = ts_avail: decline: change <= -p['decline_atr_min'] x ATR20 (ATR20 of the bar at T). Position build-up (arm 'hyp'): d_oi_pct >= p['oi_up_min_pct'] / 100. Control arms, stage A only: arm 'no_oi' = the decline condition alone (plain next-day continuation after a down day); arm 'oi_down' = the decline with d_oi_pct <= -p['oi_up_min_pct'] / 100 (retail already cut, exhaustion). Rows with ts_avail before p['start'] are ignored.\nEntry: when the row's state holds, SELL the cross at market at the first bar that opens at or after T + p['entry_delay_min'] minutes (00:15 UTC = 09:15 JST, after the Tokyo open) and no later than T + p['max_entry_delay_min'] minutes; the signal is placed on the bar before that entry bar (closed-bar information only: the row is usable from T, the signal bar must close at or after T). Stop = p['sl_atr'] x ATR20 from the fill, no target. Exit by p['hold']: 'tokyo' = close at the open of the first bar at or after p['exit_utc_tokyo'] (06:00 UTC) on the entry day; '24h' = first bar at or after T + 24 h; '48h' = first bar at or after T + 48 h (set max_bars from the bar timestamps, not a fixed bar count). One position at a time: a new state while a position is open is skipped. Compare quantised quantities with a 1e-9 relative tolerance.\nGrid: oi_up_min_pct 3 or 6 (share of down days that qualify about 35% and 17%), decline_atr_min 0.25 or 0.5, hold tokyo / 24h / 48h, sl_atr 0.5 or 1.0; the spec grid carries arm = 'hyp' only, the stage A grid adds the two control arms at the same settings (the Director amends the spec after the Critic review, as in cycle 7). Primary market AUDJPY (largest retail book after USD/JPY and the classic carry cross).",
+ "params": {
+  "oi_up_min_pct": 3.0,
+  "decline_atr_min": 0.25,
+  "hold": "24h",
+  "sl_atr": 1.0,
+  "arm": "hyp",
+  "entry_delay_min": 15,
+  "max_entry_delay_min": 60,
+  "exit_utc_tokyo": "06:00",
+  "atr_n": 20,
+  "start": "2010-01-01"
+ },
+ "grid": {
+  "oi_up_min_pct": [
+   3.0,
+   6.0
+  ],
+  "decline_atr_min": [
+   0.25,
+   0.5
+  ],
+  "hold": [
+   "tokyo",
+   "24h",
+   "48h"
+  ],
+  "sl_atr": [
+   0.5,
+   1.0
+  ]
+ },
+ "stage_a_market": "AUDJPY",
+ "pre_registered": {
+  "expected_design_t_min": 2.0,
+  "expected_avg_r": 0.12,
+  "min_trades_design_per_market": 120,
+  "expected_trades_per_month": 3.0,
+  "kill_if": "On AUDJPY in design: every hyp cell has avg R <= 0.05 or t < 1; or the best hyp cell (by t) does not beat the no_oi control at the same settings by at least 0.05 R while the oi_down control is at least as good as hyp (then open interest carries no information and this is plain post-decline continuation, which is dead); or the best hyp cell has fewer than 120 design trades. Speed score at the expectation: 0.12 x sqrt(3) = 0.21 per market; the five crosses pooled reach about 0.4 only if their trades are weakly correlated, so this leg counts toward the 60-day goal only inside the basket, which the basket step measures."
+ },
+ "similar_prior": [
+  "jpy_cross_losscut_after_us_shock (cycle 3: same-night US100 shock as trigger, Tokyo-morning intraday exits; crosses bounced)",
+  "prior_fx_session_rev and prior_cross_zfade (unconditional session reversal and z-fades, dead)",
+  "prior_trend_follow (unconditional continuation, flat)"
+ ],
+ "why_different": "The state is the exchange-published retail position build-up (open interest added on a down day), information that is not in price and that cycle 3 did not have; the trigger is not a same-night equity shock; the hold reaches the next forced-liquidation window (24-48 h) instead of exiting inside the Tokyo morning; and the no_oi control isolates the positioning effect from the dead continuation pattern.",
+ "parent_slug": null
+}

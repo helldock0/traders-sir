@@ -1,0 +1,85 @@
+{
+ "judgments": [],
+ "hypotheses": [
+  {
+   "slug": "boj_etf_lunch_bid_jp225",
+   "title": "BoJ ETF purchase flow: buy JP225 at the Tokyo lunch break when the morning session is down versus the previous close, exit before the cash close",
+   "family": "central_bank_flow_index",
+   "rationale": "From December 2010 to March 2021 the Bank of Japan bought equity ETFs under a rule the market learned quickly: on days when the TOPIX fell in the morning session relative to the previous day's close (roughly -0.2% to -0.5% and worse), the BoJ placed purchase orders through trust banks that were executed in the afternoon session, with the daily amount (JPY 12-70 billion, 2-4x that after 2016 and in 2020) published after the close. Research on the programme (Harada and Okimoto 2019; Charoenwong, Morck and Wiwattanakantang 2021; Barbon and Gianinazzi 2019) documents a measurable price lift on purchase days concentrated in the afternoon session, and a front-running pattern where dealers buy during the lunch break once the morning decline makes a purchase likely. Who trades: the BoJ's trust banks are forced buyers of a fixed yen amount regardless of price; dealers and prop desks front-run them during the 11:30-12:30 JST lunch; the sellers are the morning's liquidators. Why it shows up at this time: the trigger is only known at 11:30 JST and the execution is confined to the 12:30-15:00 JST afternoon session. The CFD trades through the lunch break on Osaka futures, so a retail trader can buy at 11:30 JST and sell before the 15:00 JST cash close; the hold is 2-3.5 hours in the cheapest hours of JP225 (median spread 7 points against a 400-point ATR20, about 0.04 R all-in at a 0.5 x ATR20 stop). The design years 2012-2017 cover the fully active programme (the index feed has no Tokyo-morning bars in 2015-2017, so most design trades will come from 2012-2014 plus 2016-2017 afternoons where the 02:30 UTC bar exists); the check period 2018-2020 is the peak-purchase era and 2021-2023 is the wind-down (purchases only on drops of about 2% or more), so a genuine effect should show a visible fade in the last three check years, and that is pre-registered here as expected rather than as a failure. A k = 0 arm (buy every day at lunch with no morning filter) is included as the placebo: index drift would make the control arm as good as the filtered arms; a BoJ flow would not.",
+   "markets": [
+    "JPNIDXJPY"
+   ],
+   "aux_markets": [],
+   "timeframe": "M15",
+   "rules": "All times UTC; Tokyo has no daylight saving so these never shift. Bars: M15 on JPNIDXJPY (bid/ask in index points). Bars are sparse; always locate bars by timestamp.\n\nREFERENCE CLOSE (previous cash close): for each UTC date D, C_prev = bid close of the last bar whose close time is at or before 06:00 UTC on the most recent earlier UTC date D' (D' < D, D - D' <= 4 calendar days) that has at least one bar closing between 05:00 and 06:00 UTC inclusive. If no such D' exists, no trade on D.\n\nMORNING MOVE: for UTC date D, let S be the last bar whose close time is at or before 02:30 UTC on D (= 11:30 JST, the end of the Tokyo morning session) and whose close time is after 02:00 UTC on D (so a stale overnight bar does not stand in for the morning close). If no such bar exists, no trade on D. r_morn = 100 * (bid_c[S] / C_prev - 1), in percent.\n\nENTRY: on bar S, if r_morn <= -k (k in percent, k = 0 means every day) and the weekday of D is Monday to Friday, signal entry_long[S] = True with entry_type 0 (market at the next bar's open, i.e. during the lunch break), valid_bars 1. One trade per UTC date; while a position is open new entries are ignored by the executor.\n\nSTOP: sl_dist[S] = sl_atr * ATR20_prev, where ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar S (known before the trading day starts). If ATR20_prev is NaN, no trade. tp_dist = NaN (no target).\n\nEXIT: time exit at exit_utc (string \"HH:MM\", parsed with F.parse_hhmm): set exit_long = True on the last bar of UTC date D whose close time is at or before exit_utc, provided that bar's close time is after the entry signal bar's close time; the executor closes the position at the open of the following bar. As a safety net also set max_bars[S] to the number of M15 bars from S to 06:00 UTC plus 4 (so a missing exit bar cannot leave the position open overnight).\n\nNo pyramiding, no shorts, no other filters.",
+   "params": {
+    "k": 0.5,
+    "sl_atr": 0.5,
+    "exit_utc": "06:00"
+   },
+   "grid": {
+    "k": [0.0, 0.5, 1.0],
+    "sl_atr": [0.5, 1.0],
+    "exit_utc": ["04:30", "06:00"]
+   },
+   "stage_a_market": "JPNIDXJPY",
+   "pre_registered": {
+    "expected_design_t_min": 2.0,
+    "expected_avg_r": 0.1,
+    "min_trades_design_per_market": 80,
+    "kill_if": "Design avg R at k = 0.5 and at k = 1.0 (at the same stop and exit) is <= 0, or design t < 1, or the k = 0 control arm is within 0.03 R of the best filtered arm at the same stop and exit (then the result is index drift, not BoJ flow). Expected shape: filtered arms beat the control by at least 0.05 R in design; check years 2018-2020 positive, 2021-2023 near zero. A check period that is positive only because of 2021-2023 contradicts the mechanism and is also a kill."
+   },
+   "similar_prior": [
+    "prior_index_meanrev",
+    "prior_eq_overnight_drift",
+    "prior_nasdaq_intraday_momentum",
+    "prior_fomc_cycle"
+   ],
+   "why_different": "The scrap index's index work is close-to-close dip buying with 1-10 day holds (index_meanrev: RSI and big-down-day rules on Nasdaq/S&P/Nikkei), overnight drift at the European open on US indices, US intraday momentum, and Fed-cycle drift. None of them conditions on a named, non-price-sensitive buyer with a public trigger and a fixed afternoon execution window on the Nikkei. This is a flow test, not a reversal test: the trade is a 2-3.5 hour intraday hold inside the Tokyo cash session, the trigger is the morning-session return versus the previous close exactly as the BoJ used it, the placebo arm (k = 0) separates flow from drift, and the pre-registration predicts a fade when the programme was wound down in 2021 instead of treating it as a gate failure. Cost per trade is about 0.04 R, well under the 7-14 bp that killed US index intraday ideas, because JP225 spreads are 7 points against a 400-point daily range.",
+   "parent_slug": null
+  },
+  {
+   "slug": "jpy_cross_losscut_after_us_shock",
+   "title": "Forced losscut flow: short AUDJPY (NZDJPY, CADJPY) into the Tokyo pre-open after a US-session equity shock",
+   "family": "cross_asset_forced_liquidation",
+   "rationale": "Japanese retail margin accounts are the largest retail FX market in the world (GMO Click, DMM, SBI; about USD 1 trillion a month of volume) and are structurally long the high-yield yen crosses (AUDJPY, NZDJPY, and since 2022 USDJPY) for carry at 5-25x leverage. The brokers enforce an automatic losscut when margin falls below a maintenance ratio, and a large part of the retail book is managed during Tokyo hours. When US equities sell off hard during the New York session, the yen crosses fall with them overnight for Tokyo; the retail book opens the Tokyo morning sitting on losses it has not reacted to, and the losscut orders, margin calls and manual de-risking are executed in the 08:00-10:00 JST window. Who is on the other side: Tokyo-session dealers who buy the forced selling and hold the inventory, which is the pressure that shows up as continuation of the overnight move in the first Tokyo hours on exactly those days. This is the 'Mrs Watanabe forced unwind' documented on the 2007-08, 2015-08-24 and 2016-06-24 and 2024-08-05 episodes; the question here is whether it exists at a tradeable size on ordinary shock days (US100 down 0.75-1.5% in the cash session), which happen 10-20 times a year. On ordinary days Japanese retail are contrarian dip buyers, which is why unconditional Tokyo-open fades and follows are both zero (fx_session_rev, edge_hunt); the mechanism here only operates when the overnight loss is large enough to trigger forced selling, so it is conditioned on an external equity shock measured in the aux market, not on the cross's own move. Costs: AUDJPY median spread 0.9 pips plus 0.4 pips slippage against a 0.5 x ATR20 stop of about 40 pips, about 0.035 R, and the trade is a market order at 08:00 JST with a time exit, which a human can execute on a prop account.",
+   "markets": [
+    "AUDJPY",
+    "NZDJPY",
+    "CADJPY"
+   ],
+   "aux_markets": [
+    "USATECHIDXUSD"
+   ],
+   "timeframe": "M15",
+   "rules": "All times UTC. Bars: M15 on the primary yen cross; the auxiliary market USATECHIDXUSD (US100 CFD) is attached on M15 and read only through F.aux_window_change and F.aux_asof.\n\nUS SHOCK: chg = F.aux_window_change(m, \"USATECHIDXUSD\", 13, 30, 20, 0) (bid close change of US100 from its first bar at or after 13:30 UTC to its last bar closed by 20:00 UTC on the same UTC date; NaN before 20:00 UTC and on days without those bars). lvl = F.aux_asof(m, \"USATECHIDXUSD\", \"bid_c\") (the US100 level at the last aux bar closed by the primary bar). shock_pct = 100 * chg / (lvl - chg), the percentage move over the window (the denominator recovers the window-start level without using any later bar). Where chg or lvl is NaN there is no signal.\n\nSIGNAL BAR: on each UTC date D whose weekday is Monday to Thursday, let S be the first primary bar whose close time is at or after 23:00 UTC on D and before 23:59 UTC on D (= 08:00 JST, one hour before the Tokyo open; this is already the next 17:00-New-York trading day). If no such bar exists, no trade on D. Condition: shock_pct[S] <= -k (k in percent).\n\nENTRY: entry_short[S] = True, entry_type 0 (market at the next bar's open), valid_bars 1. One trade per UTC date; the executor ignores new entries while a position is open.\n\nSTOP: sl_dist[S] = sl_atr * ATR20_prev with ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar S (the daily ATR known at the start of the trading day that contains S). No trade if NaN. tp_dist = NaN.\n\nEXIT: time exit at exit_utc (\"HH:MM\", F.parse_hhmm) on the next UTC date D+1: exit_short = True on the last bar whose close time is at or before exit_utc on D+1 and after the entry signal bar's close; the executor closes at the following bar's open. Safety net: max_bars[S] = number of M15 bars from S to 06:00 UTC on D+1 plus 4.\n\nFridays are excluded because there is no Tokyo session after a Friday US session; no longs, no other filters.",
+   "params": {
+    "k": 1.0,
+    "sl_atr": 0.5,
+    "exit_utc": "02:00"
+   },
+   "grid": {
+    "k": [0.75, 1.0, 1.5],
+    "sl_atr": [0.5, 1.0],
+    "exit_utc": ["02:00", "06:00"]
+   },
+   "stage_a_market": "AUDJPY",
+   "pre_registered": {
+    "expected_design_t_min": 1.5,
+    "expected_avg_r": 0.1,
+    "min_trades_design_per_market": 40,
+    "kill_if": "Stage A best design avg R on AUDJPY <= 0 or design t < 1; or avg R does not rise with k (no monotone response to shock size across 0.75 / 1.0 / 1.5 at the same stop and exit), which would mean the sign is noise rather than a size-triggered liquidation; or NZDJPY and CADJPY both negative in stage B while AUDJPY is positive (then it is one market's luck, not a retail-book effect). Sample is small in design (the US100 feed covers 2013-2017 cleanly, about 45-70 Monday-Thursday shock days at k = 1.0), so a design t between 1 and 2 with a positive check and walk-forward is the realistic good outcome; a design t >= 2 is the hoped-for one."
+   },
+   "similar_prior": [
+    "prior_nasdaq_lead_lag",
+    "prior_fx_session_rev",
+    "jpy_tokyo_open_contrarian_flow",
+    "prior_fx_carry",
+    "prior_cross_zfade"
+   ],
+   "why_different": "The dead lead-lag tests (edge_hunt) traded USDJPY for 1-2 hours right after the Nasdaq open or the Nikkei open on every day with any move, i.e. an information lead-lag inside the same session; the dead session tests (fx_session_rev, the rejected Tokyo-open contrarian idea) faded the previous session's own FX move unconditionally at the next session's open; carry work rebalanced monthly with vol switches; the cross z-fade traded 2-sigma moves in range crosses. This hypothesis trades the opposite direction to the fades (continuation), only on the roughly 10% of days defined by an external equity shock read from the aux market, in carry crosses where the Japanese retail book is structurally long, in the one-hour window before the Tokyo open when brokers execute forced losscuts, with a monotone-in-shock-size prediction as a built-in sanity check. The aux-market facility that makes this testable did not exist when cycle 1 and cycle 2 held the cross-market ideas.",
+   "parent_slug": null
+  }
+ ],
+ "direction_note": "Cycle 3 has nothing to judge (no candidates, no reports finished) and registers two flow hypotheses that are different in kind from the scrap index: a named forced buyer (BoJ ETF purchases, afternoon session, JP225) and a named forced seller (Japanese retail losscuts in the Tokyo pre-open on yen crosses after a US equity shock, read through the new aux-market facility). Facts that shaped the choice: (1) the engine now exposes auxiliary markets through F.aux_asof and F.aux_window_change, so the cross-market ideas held in cycles 1 and 2 are actionable; this cycle uses it for the equity-shock condition. (2) Index-feed coverage is uneven in the design years: JPNIDXJPY has no Tokyo-morning (00:00-02:00 UTC) bars in 2015-2017 and USATECHIDXUSD has no overnight bars in 2016-2017; both lack 21:00 UTC bars, so any index window must end by 20:00 UTC and Nikkei morning references must use the previous cash close rather than the 00:00 open. Design evidence for Tokyo-morning index ideas is effectively 2012-2014; builders and the Critic should expect smaller design samples on index ideas than the FX universe gives. (3) The atlas observation that USD also rises at the London open and into the 4pm fix on M-3 days was made on all years including the holdout, so it is not a clean pre-registration and should not be registered as a second M-3 leg. (4) Lead-lag from US or Japanese equities into USDJPY within the same session is dead (28 tests, negative in design and check); the only cross-asset channel left untested is the conditional forced-liquidation one, which cycle 3 now tests. If both hypotheses fail, the next cycles should leave the Tokyo clock and the index CFDs alone and look at multi-day swing mechanisms on cheap FX pairs that the atlas's intraday windows could not see (for example multi-day positioning unwinds after the losscut days, or holding-period effects across the Wednesday triple-swap rollover measured net of swap)."
+}

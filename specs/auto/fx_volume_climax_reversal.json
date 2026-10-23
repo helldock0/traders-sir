@@ -1,0 +1,49 @@
+{
+  "slug": "fx_volume_climax_reversal",
+  "title": "Volume-climax capitulation reversal: fade a one-day shock move only when it carries a tick-volume climax (forced liquidation), on FX majors, yen crosses and gold, 1-3 day hold",
+  "family": "liquidity_provision_capitulation",
+  "rationale": "Large one-day moves come in two kinds. Informed repricing (a data surprise, a central bank shift) is absorbed over days and tends to continue, which is why fading 2-sigma moves on crosses lost (cross_zfade: moves kept running) and why unfiltered big-down-day buying on gold was zero (index_meanrev gold rows MR1-MR4 and MR9-MR10, all about 0 R in design). Forced liquidation is different: stop cascades, margin calls and risk-limit cuts (CTAs, retail margin books, option dealers delta-hedging through strikes) sell or buy regardless of value, and the inventory is absorbed by dealers and liquidity providers who are compensated by a reversal over the following one to three days (Nagel 2012 'Evaporating liquidity'; the classic Grossman-Miller liquidity-provision return). The two kinds cannot be told apart from price alone, but forced liquidation leaves a fingerprint that no prior test in this programme has used: tick volume far above its recent level. Dukascopy tick volume per bar is in the data for every market (m.vol); its raw scale shifts between years and has rare near-zero days, so it is only usable as a ratio to its own trailing 20-day mean, which this spec uses. The hypothesis is therefore conditional: a shock day (|close-to-close move| >= k x ATR20) with volume >= v x its 20-day mean reverses; the same shock day without the volume climax does not. The v = 0.0 arm is the control (every shock day, no volume condition) and must stay near zero; a real effect shows as a monotone rise of avg R with v. Costs are negligible at this horizon: the fill is at 20:00 UTC, before the 17:00 New York rollover widens spreads, against a stop of one ATR20 (EURUSD 0.35 pips spread and 0.4 pips slippage against a 75-pip stop, about 0.01 R; gold about 0.02 R). Expected sample: shock days at k = 1.5 are about 8% of days, so 150-170 design days per market before the volume filter and 40-70 after it; pooling six markets in stage B and the check period gives the power that one market lacks. Critic revisions accepted before any run: thresholds lowered for sample size from an outcome-free frequency count (Dukascopy volume is quoted size, its shock-day ratio rarely exceeds 1.7), the monotone-in-volume kill moved to pooled stage-B cells, date-clustered pooled t-statistics, and the exit flag placed on the bar before the hold-day signal bar so follow-on shocks can trade. Second amendment after the code review, before any run: the control arm is v = 0.0 (v = 1.0 excluded below-average-volume shock days and was not a control), and signals are accepted one position at a time so no exit flag can close another trade.",
+  "markets": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY",
+    "AUDJPY",
+    "XAUUSD"
+  ],
+  "timeframe": "H1",
+  "strategy_path": "strategies\\auto\\fx_volume_climax_reversal.py",
+  "params": {
+    "k": 1.0,
+    "v": 1.3,
+    "sl_atr": 1.0,
+    "hold_days": 1
+  },
+  "grid": {
+    "k": [
+      1.0,
+      1.25
+    ],
+    "v": [
+      0.0,
+      1.3,
+      1.5
+    ],
+    "hold_days": [
+      1,
+      3
+    ]
+  },
+  "stage_a": {
+    "market": "EURUSD"
+  },
+  "pre_registered": {
+    "expected_design_t_min": 1.0,
+    "expected_avg_r": 0.08,
+    "min_trades_design_per_market": 40,
+    "kill_if": "(1) Stage A best design avg R on EURUSD <= 0 or design t < 1. (2) Volume is the mechanism, judged on pooled stage-B design data (6 markets): for each v, take avg R averaged over the four (k, hold) cells with trades from all markets pooled; require avg R(v=1.5) >= avg R(v=1.3) - 0.02 and max(avg R(1.3), avg R(1.5)) - avg R(0.0) >= 0.04; then the same 0.04 gap must hold in the check period at the chosen (k, hold). Failing either is a kill regardless of sign: if the v=0.0 control (no volume filter) is as good as the filtered arms the result is plain reversal, already measured as about zero. (3) Cross-market: at the chosen combination at least four of the six markets must be positive in design. (4) Regime: the check period must be positive with 2020 removed. Pooled t-statistics in stage B, check and walk-forward should be read on date-clustered R (average the R of all markets that traded the same signal date into one observation, t over dates) because Brexit, the SNB day and the yen flash crash hit 3-5 markets at once; the unclustered figure is reported alongside. Minimum trades: 40 per market in design at k=1.0, v=1.3, and 200 pooled. Record: the thresholds were moved from k 1.5/2.0 and v 1.0/1.75/2.5 to k 1.0/1.25 and v 0.0/1.3/1.5 (v=0.0 replacing v=1.0 as the control after the code review showed v=1.0 drops 25-30% of shock days) for sample-size feasibility, from a frequency count with no outcomes examined; the original arms held 0-8 design trades per market because Dukascopy volume is summed quoted size whose 90th-percentile 20-day ratio on shock days is only 1.56-1.71. Honest expectations: per-market design t about 0.6-1.2 at 0.08 R, so a stage A kill on EURUSD alone has a real chance of being a false negative; the pooled stage B and the check carry the evidence."
+  },
+  "costs": {},
+  "notes": "All times UTC. Bars: H1 on each market. Bars are sparse; locate by timestamp.\n\nDAILY REFERENCE CLOSE: for each UTC date D, let E(D) be the last H1 bar whose close time is at or before 20:00 UTC on D and after 16:00 UTC on D (so a stale bar cannot stand in for the US afternoon close). If no such bar exists, D is not a signal day. C(D) = bid_c[E(D)].\n\nSHOCK MOVE: ret(D) = C(D) - C(D_prev), where D_prev is the most recent earlier UTC date with a valid E(D_prev) and D - D_prev <= 4 calendar days. ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar E(D) (the daily ATR known at the start of the trading day that contains E(D)). A shock day is |ret(D)| >= k * ATR20_prev.\n\nVOLUME CLIMAX: V(D) = sum of m.vol over all H1 bars with close time in (20:00 UTC on D_prev, 20:00 UTC on D]. Vbar(D) = mean of V over the 20 most recent earlier signal-eligible dates (dates with a valid E and a valid V), all strictly before D. Require Vbar(D) > 0 and V(D) finite. Volume condition: V(D) >= v * Vbar(D). v = 0.0 is the control arm: the volume condition is V >= 0, so every shock day qualifies with no volume filter at all (the formula V >= v * Vbar is the only test; do not add a separate V >= Vbar floor).\n\nENTRY: on bar E(D), if the day is a shock day and the volume condition holds and the weekday of D is Monday to Friday: if ret(D) < 0 set entry_long[E(D)] = True, else set entry_short[E(D)] = True (fade the day's move). entry_type 0 (market at the next bar's open), valid_bars 1. One signal per date; the executor ignores new entries while a position is open.\n\nSTOP: sl_dist[E(D)] = sl_atr * ATR20_prev; no trade if NaN or <= 0. tp_dist = NaN.\n\nEXIT: time exit after hold_days: let X = E(D + hold_days), where D + hold_days means the hold_days-th later UTC date that has a valid E (skipping weekends and dateless days). Set exit_long/exit_short = True on bar X - 1 (the last bar before X), only if X - 1 > E(D); the executor then closes at the open of bar X, which ends at 20:00 UTC on that date, so the position is flat when a new shock signal at X registers (shock days cluster; this keeps the follow-on shocks). Safety net: max_bars[E(D)] = 24 * (hold_days + 3) H1 bars.\n\nNo other filters, no pyramiding, no re-entry while a position is open.\n\nVOLUME DETAIL: H1 bars are labelled by open time, so a bar's close time is ts + 1h; V(D) sums m.vol over bars whose close time lies in (20:00 UTC on D_prev, 20:00 UTC on D]. Vbar(D) is the mean of the previous 20 valid V values strictly before D. Monday windows include the Friday-evening and Sunday-open hours; accept as specified, do not renormalise. XAUUSD has artefact minutes holding up to 91% of a day's volume: do not filter them (no new knobs); the stage C report should list the dates of the XAUUSD climax trades.\n\nONE POSITION AT A TIME, CAUSALLY: accept signals in date order and write entry, stop, max_bars and the exit flag only for signals the executor will actually take. Track when the accepted trade goes flat (its first stop touch on bid_l/ask_h after the fill at the next open, its own exit bar X, or the max_bars cap, whichever is first) and skip any later signal whose signal bar is before that flat bar, writing nothing for it (not even an exit flag), so a leftover exit flag can never close a different trade. A signal on the bar where the previous trade closes is accepted. This decision for a later signal uses only bars at or before that later signal bar, so it is causal.",
+  "aux_markets": []
+}

@@ -1,0 +1,170 @@
+{
+ "cycle": 2,
+ "finished": "2026-10-12T08:02:14+00:00",
+ "direction_note": "Cycle 2: London trend-day continuation scrapped (lesson recorded). Both new hypotheses were rejected by the Critic before compute on prior evidence, and the Director accepts: (a) a long into the Tokyo fix is cost-dominated on every day type (gj-strat P1 fix-long: gotobi about 0 R, other weekdays -0.07 to -0.09 R design and negative in check), and the holiday-adjusted gotobi calendar was already measured (design +0.143 vs +0.144 R) and not adopted; (b) fading the New York session at the Tokyo open is the dead session-reversal family, an unconditional long from 00:00 UTC loses about -0.05 R to the fix, and Japanese retail trade in the Tokyo evening rather than at the open. Structural findings: the strategy contract is single-market, so cross-market mechanisms (risk-off transmission into carry crosses, equity-hedge month-end flows beyond USDJPY) cannot be registered until the engine exposes a second market; index CFD intraday trades are cost-dead in the design years (1 point slippage per fill = 7-14 bp round trip in 2012-2014) and Nasdaq intraday momentum was already measured at -0.12 R (gj-strat index_anomalies E4a/E4b); month-end fix flows faded after 2018 in every form tested. Next cycle: stop mining yen fix slots (pre-fix, post-fix non-gotobi, holiday-shifted and Tokyo-open variants are all measured). Real chances now need one of: an engine extension for cross-market state (user decision); multi-day holding periods on cheap instruments with a flow mechanism outside the scrap index, designed as pooled multi-market tests because single-market event counts (60-100) are under-powered; or a review of the index cost model (points vs basis points) before any index hypothesis. Also ask the user whether to register the live survivors (gotobi short with vol filter, M-3 USD bid) through this pipeline so the good bucket and basket step reflect the real portfolio.",
+ "director_events": [
+  "london_trend_day_ny_continuation: scrapped by director"
+ ],
+ "director": {
+  "judgments": [
+   {
+    "slug": "london_trend_day_ny_continuation",
+    "decision": "scrap",
+    "lesson": "Same-day continuation of London trend days into New York is not a durable FX flow. The trend-day signature (London range >= k x ATR20 and a close at the extreme by 12:00 UTC) gave EURUSD design +0.10 R (t 1.8) but check -0.09 R; pooled check over four markets was -0.002 R on 666 trades and walk-forward OOS was 0.001 R. GBPJPY was the only market with positive walk-forward and it died at 2x costs. Conditional intraday continuation now joins session reversal, box breakouts and fix follows in the dead pile: do not retry with other range or close-location thresholds, other exit hours, or other majors.",
+    "notes": "Scrapped by the pipeline at G2_check_positive; the Director confirms. The design-period edge on EURUSD was concentrated in 2012 and 2015 (two years carried most of the R), which is the signature of a few trending regimes rather than a daily flow. Nothing to refine."
+   }
+  ],
+  "hypotheses": [
+   {
+    "slug": "usdjpy_tokyo_fix_holiday_shift",
+    "title": "Holiday-shifted Tokyo-fix demand: USDJPY rises into the 09:55 JST fix on the weekday before and after a Japanese market holiday",
+    "family": "settlement_flow_tokyo_fix",
+    "rationale": "The Tokyo fix at 09:55 JST is where Japanese importers and other yen-side payers buy dollars for settlement; on gotobi days that demand is concentrated and USDJPY rises into the fix and gives it back afterwards (the known gotobi edge, +0.10 R per trade as a trade, design t 3.2). The counterparties are the dealers who warehouse the flow and sell it back after the fix. A Japanese market holiday removes a settlement day entirely: payments falling on the holiday move to the preceding business day (maeoshi) or to the following one (yokueigyobi), so the fix on the weekday before and the weekday after a holiday carries the holiday's settlement demand on top of its own. The same reasoning produced the only post-2010 calendar survivor outside gotobi and month-end: the atlas's 'day after a US holiday' USDJPY buy at the Tokyo fix (+0.12 / +0.05 / +0.07 R design / check / holdout). Japanese holidays are more numerous (16-20 weekdays a year) and the flow is the direct yen-settlement flow, so the effect should be at least as large. Costs are the lowest in the universe (USDJPY median spread 0.6 pips, about 1.7 pips all-in for a 1-3 hour trade against a 15-35 pip stop). Gotobi days are excluded so the test measures only the holiday-shifted demand and cannot borrow the known edge. The grid pre-registers which side carries the flow: 'after' if the convention is next-business-day, 'before' if it is preceding-business-day, 'either' pools them for power.",
+    "markets": [
+     "USDJPY"
+    ],
+    "timeframe": "M5",
+    "rules": "All times UTC (Tokyo has no daylight saving, so these never shift). Bars: M5 on USDJPY.\nJAPANESE MARKET HOLIDAYS. Hardcode this exact list in the module as a tuple of ISO date strings (no datetime module; parse with numpy datetime64): 2010-01-01, 2010-01-02, 2010-01-03, 2010-01-11, 2010-02-11, 2010-03-21, 2010-03-22, 2010-04-29, 2010-05-03, 2010-05-04, 2010-05-05, 2010-07-19, 2010-09-20, 2010-09-23, 2010-10-11, 2010-11-03, 2010-11-23, 2010-12-23, 2010-12-31, 2011-01-01, 2011-01-02, 2011-01-03, 2011-01-10, 2011-02-11, 2011-03-21, 2011-04-29, 2011-05-03, 2011-05-04, 2011-05-05, 2011-07-18, 2011-09-19, 2011-09-23, 2011-10-10, 2011-11-03, 2011-11-23, 2011-12-23, 2011-12-31, 2012-01-01, 2012-01-02, 2012-01-03, 2012-01-09, 2012-02-11, 2012-03-20, 2012-04-29, 2012-04-30, 2012-05-03, 2012-05-04, 2012-05-05, 2012-07-16, 2012-09-17, 2012-09-22, 2012-10-08, 2012-11-03, 2012-11-23, 2012-12-23, 2012-12-24, 2012-12-31, 2013-01-01, 2013-01-02, 2013-01-03, 2013-01-14, 2013-02-11, 2013-03-20, 2013-04-29, 2013-05-03, 2013-05-04, 2013-05-05, 2013-05-06, 2013-07-15, 2013-09-16, 2013-09-23, 2013-10-14, 2013-11-03, 2013-11-04, 2013-11-23, 2013-12-23, 2013-12-31, 2014-01-01, 2014-01-02, 2014-01-03, 2014-01-13, 2014-02-11, 2014-03-21, 2014-04-29, 2014-05-03, 2014-05-04, 2014-05-05, 2014-05-06, 2014-07-21, 2014-09-15, 2014-09-23, 2014-10-13, 2014-11-03, 2014-11-23, 2014-11-24, 2014-12-23, 2014-12-31, 2015-01-01, 2015-01-02, 2015-01-03, 2015-01-12, 2015-02-11, 2015-03-21, 2015-04-29, 2015-05-03, 2015-05-04, 2015-05-05, 2015-05-06, 2015-07-20, 2015-09-21, 2015-09-22, 2015-09-23, 2015-10-12, 2015-11-03, 2015-11-23, 2015-12-23, 2015-12-31, 2016-01-01, 2016-01-02, 2016-01-03, 2016-01-11, 2016-02-11, 2016-03-20, 2016-03-21, 2016-04-29, 2016-05-03, 2016-05-04, 2016-05-05, 2016-07-18, 2016-08-11, 2016-09-19, 2016-09-22, 2016-10-10, 2016-11-03, 2016-11-23, 2016-12-23, 2016-12-31, 2017-01-01, 2017-01-02, 2017-01-03, 2017-01-09, 2017-02-11, 2017-03-20, 2017-04-29, 2017-05-03, 2017-05-04, 2017-05-05, 2017-07-17, 2017-08-11, 2017-09-18, 2017-09-23, 2017-10-09, 2017-11-03, 2017-11-23, 2017-12-23, 2017-12-31, 2018-01-01, 2018-01-02, 2018-01-03, 2018-01-08, 2018-02-11, 2018-02-12, 2018-03-21, 2018-04-29, 2018-04-30, 2018-05-03, 2018-05-04, 2018-05-05, 2018-07-16, 2018-08-11, 2018-09-17, 2018-09-23, 2018-09-24, 2018-10-08, 2018-11-03, 2018-11-23, 2018-12-23, 2018-12-24, 2018-12-31, 2019-01-01, 2019-01-02, 2019-01-03, 2019-01-14, 2019-02-11, 2019-03-21, 2019-04-29, 2019-04-30, 2019-05-01, 2019-05-02, 2019-05-03, 2019-05-04, 2019-05-05, 2019-05-06, 2019-07-15, 2019-08-11, 2019-08-12, 2019-09-16, 2019-09-23, 2019-10-14, 2019-10-22, 2019-11-03, 2019-11-04, 2019-11-23, 2019-12-31, 2020-01-01, 2020-01-02, 2020-01-03, 2020-01-13, 2020-02-11, 2020-02-23, 2020-02-24, 2020-03-20, 2020-04-29, 2020-05-03, 2020-05-04, 2020-05-05, 2020-05-06, 2020-07-23, 2020-07-24, 2020-08-10, 2020-09-21, 2020-09-22, 2020-11-03, 2020-11-23, 2020-12-31, 2021-01-01, 2021-01-02, 2021-01-03, 2021-01-11, 2021-02-11, 2021-02-23, 2021-03-20, 2021-04-29, 2021-05-03, 2021-05-04, 2021-05-05, 2021-07-22, 2021-07-23, 2021-08-08, 2021-08-09, 2021-09-20, 2021-09-23, 2021-11-03, 2021-11-23, 2021-12-31, 2022-01-01, 2022-01-02, 2022-01-03, 2022-01-10, 2022-02-11, 2022-02-23, 2022-03-21, 2022-04-29, 2022-05-03, 2022-05-04, 2022-05-05, 2022-07-18, 2022-08-11, 2022-09-19, 2022-09-23, 2022-10-10, 2022-11-03, 2022-11-23, 2022-12-31, 2023-01-01, 2023-01-02, 2023-01-03, 2023-01-09, 2023-02-11, 2023-02-23, 2023-03-21, 2023-04-29, 2023-05-03, 2023-05-04, 2023-05-05, 2023-07-17, 2023-08-11, 2023-09-18, 2023-09-23, 2023-10-09, 2023-11-03, 2023-11-23, 2023-12-31, 2024-01-01, 2024-01-02, 2024-01-03, 2024-01-08, 2024-02-11, 2024-02-12, 2024-02-23, 2024-03-20, 2024-04-29, 2024-05-03, 2024-05-04, 2024-05-05, 2024-05-06, 2024-07-15, 2024-08-11, 2024-08-12, 2024-09-16, 2024-09-22, 2024-09-23, 2024-10-14, 2024-11-03, 2024-11-04, 2024-11-23, 2024-12-31, 2025-01-01, 2025-01-02, 2025-01-03, 2025-01-13, 2025-02-11, 2025-02-23, 2025-02-24, 2025-03-20, 2025-04-29, 2025-05-03, 2025-05-04, 2025-05-05, 2025-05-06, 2025-07-21, 2025-08-11, 2025-09-15, 2025-09-23, 2025-10-13, 2025-11-03, 2025-11-23, 2025-11-24, 2025-12-31, 2026-01-01, 2026-01-02, 2026-01-03, 2026-01-12, 2026-02-11, 2026-02-23, 2026-03-20, 2026-04-29, 2026-05-03, 2026-05-04, 2026-05-05, 2026-05-06, 2026-07-20, 2026-08-11, 2026-09-21, 2026-09-22, 2026-09-23, 2026-10-12, 2026-11-03, 2026-11-23, 2026-12-31. It is the statutory national holidays 2010-2026 including substitute holidays (a Sunday holiday moves to the next free weekday), citizens' holidays (a weekday between two holidays), the 2019 enthronement days (04-30, 05-01, 05-02, 10-22), the 2020/2021 Olympic shifts of Marine, Mountain and Sports Day, plus the bank closures 12-31, 01-02 and 01-03 every year. MISSED-FIX DAYS = the listed dates that fall on Monday to Friday (F.weekday(dates) < 5): no Tokyo fix is set and no yen settlement happens on them.\nCANDIDATE DATES. Let dates = np.unique(F.utc_dates(m)) restricted to Monday-Friday, not in the holiday list, and with F.is_gotobi(dates) False (gotobi days carry the known settlement flow and are excluded so this test measures only the holiday-shifted demand). prev_wd(d) = the previous weekday (Friday when d is Monday); next_wd(d) = the next weekday (Monday when d is Friday). d is an AFTER day if prev_wd(d) is a missed-fix day; d is a BEFORE day if next_wd(d) is a missed-fix day. Param side: 'after' trades AFTER days, 'before' trades BEFORE days, 'either' trades days that are AFTER or BEFORE (a day that is both counts once).\nENTRY (long USDJPY, i.e. buy USD). Entry target time = entry_utc on the same UTC date d when entry_utc < '12:00', otherwise entry_utc on the previous calendar date d-1 (so '22:30' means 22:30 UTC the evening before = 07:30 JST on d; for a Monday that is Sunday 22:30 UTC, when Dukascopy already quotes). Let ei = F.first_bar_at_or_after(m, target_date, hh, mm). Skip the day if ei >= m.n or m.ts[ei] is more than max_delay_min minutes after the target. Signal the market entry on bar ei-1 (s.entry_long[ei-1] = True) so the order fills at the open (ask) of bar ei.\nEXIT. xi = F.first_bar_at_or_after(m, d, 0, 55) for exit_utc '00:55' (the 09:55 JST fix). Skip the day if xi >= m.n, xi <= ei, or m.ts[xi] is more than max_delay_min minutes after 00:55 UTC. Set s.exit_long[xi-1] = True so the position closes at the open (bid) of bar xi. No take-profit, no re-entry, one trade per date.\nSTOP. sl_dist = sl_atr * ATR20 where ATR20 = F.atr_prev(F.daily_bars(m), 20) broadcast to bars with daily.to_bars (previous-20-trading-day average true range on New York 17:00 daily bars, known at the start of the trading day containing bar ei). Take the value at bar ei; skip the day if it is not finite or <= 0. Write sl_dist on the signal bar ei-1.\nPARAMETERS. side in {before, after, either}; entry_utc in {22:30, 23:30, 00:00}; exit_utc fixed '00:55'; sl_atr in {0.25, 0.5}; max_delay_min = 10. Read every tunable from p.",
+    "params": {
+     "side": "either",
+     "entry_utc": "23:30",
+     "exit_utc": "00:55",
+     "sl_atr": 0.25,
+     "max_delay_min": 10
+    },
+    "grid": {
+     "side": [
+      "before",
+      "after",
+      "either"
+     ],
+     "entry_utc": [
+      "22:30",
+      "23:30",
+      "00:00"
+     ],
+     "sl_atr": [
+      0.25,
+      0.5
+     ]
+    },
+    "stage_a_market": "USDJPY",
+    "pre_registered": {
+     "expected_design_t_min": 1.5,
+     "expected_avg_r": 0.12,
+     "min_trades_design_per_market": 50,
+     "kill_if": "Stage A on USDJPY: no combination with at least 50 design trades has design avg R > 0 and t >= 1. Also treat as dead if the best combination's design avg R is below +0.05 R (half the gotobi trade's +0.10 R): a holiday-shifted flow weaker than that cannot carry a basket leg on 15-20 days a year. If 'either' is positive only because one side is strongly positive and the other clearly negative, record which side carries the flow and do not pool in any follow-up."
+    },
+    "similar_prior": [
+     "prior_flow_atlas",
+     "prior_fix_fades"
+    ],
+    "why_different": "The flow atlas scanned unconditional half-hour means by day type and included 'day before a Japan holiday' but not 'day after a Japan holiday'; its survival bar (design |t| >= 4.5 for pairs, built for 600,912 tests) could not have seen a trade-sized effect of +0.1 R, which is the size of the gotobi edge itself (t 3.2 as a trade). This is one pre-registered prediction derived from the settlement convention, with the known gotobi days removed, not a re-slice of the scan. The fix-fade tests traded fixed calendar slots (month-start Tokyo fix, gotobi) in both directions; none conditioned on holiday-shifted settlement dates.",
+    "parent_slug": null
+   },
+   {
+    "slug": "jpy_tokyo_open_contrarian_flow",
+    "title": "Tokyo-open contrarian flow: fade the New York session move in USDJPY and AUDJPY at 09:00 JST",
+    "family": "liquidity_provision_tokyo_open",
+    "rationale": "Two large yen-side participant groups trade against the overnight move when Tokyo opens. Japanese retail margin traders (several trillion yen of monthly turnover, documented by the BoJ and the Tokyo Financial Exchange as systematically contrarian: they add to long USDJPY and AUDJPY positions after falls and take profit after rises) and Japanese importers and institutions who buy dollars more readily when the New York session has made them cheaper. Both groups are absent during New York hours, when macro accounts and CTAs move the price, and both arrive at 09:00 JST. The prediction is a partial reversal of the New York session move in the first one to two hours of Tokyo, strongest for falls (importer plus retail buying) and larger after larger moves. The other side is the New York accounts that pushed the price and the dealers who carried the inventory overnight. Costs: USDJPY 0.6 pips and AUDJPY 0.9 pips spread, about 1.7 to 2.0 pips all-in, against a 2-hour sigma of roughly 12-18 pips and stops of 0.25-0.5 ATR20 (15-40 pips). Sample: a 1.25-sigma threshold selects about a fifth of weekdays, roughly 400 design trades per market. The 'both' arm tests whether the flow is symmetric contrarian liquidity provision; the primary arm is long-only.",
+    "markets": [
+     "USDJPY",
+     "AUDJPY"
+    ],
+    "timeframe": "M5",
+    "rules": "All times UTC. Bars: M5. Markets USDJPY (primary) and AUDJPY, same rules.\nREFERENCE MOVE. For every UTC calendar date d that is a Tuesday, Wednesday, Thursday or Friday, the reference session is the New York session of the previous calendar date d-1 (always a weekday Monday-Thursday): P13 = bid close of the last bar strictly before ny_start ('13:00') on d-1 and P21 = bid close of the last bar strictly before ny_end ('21:00') on d-1 (use F.first_bar_at_or_after(m, d-1, hh, mm) and take the bar before it). Skip the day if either bar is more than 15 minutes before its target time or does not exist. M(d) = ln(P21 / P13). Mondays are never traded (the weekend gap sits between Friday's New York session and Monday's Tokyo open).\nVOLATILITY SCALE. sigma(d) = sample standard deviation (ddof 1) of the previous vol_window (20) available values of M, i.e. the M values of the 20 most recent earlier reference days, not including M(d). Skip days that have fewer than 20 earlier values. Compute this with a Python loop over days or a rolling window on the per-day array; never with information from d or later.\nSIGNAL. Trade only if |M(d)| >= theta * sigma(d). Direction is contrarian to the New York move: M(d) < 0 (the pair fell in New York) -> LONG at the Tokyo open; M(d) > 0 -> SHORT, but shorts are taken only when side == 'both' (side == 'long_only' takes the long trades only). M(d) == 0 -> no trade.\nENTRY. ei = F.first_bar_at_or_after(m, d, 0, 0) for entry_utc '00:00' (09:00 JST, Tokyo open). Skip if ei >= m.n or m.ts[ei] is more than max_delay_min (10) minutes after the target. Signal the market order on bar ei-1 (entry_long or entry_short) so it fills at the open of bar ei (ask for longs, bid for shorts).\nEXIT. xi = F.first_bar_at_or_after(m, d, hh, mm) for exit_utc in {'00:55', '02:00'}. Skip if xi >= m.n, xi <= ei or m.ts[xi] is more than max_delay_min minutes after the target. Set exit_long / exit_short on bar xi-1 so the position closes at the open of bar xi. No take-profit, one trade per date, no re-entry.\nSTOP. sl_dist = sl_atr * ATR20 where ATR20 = F.atr_prev(F.daily_bars(m), 20) broadcast to bars (New York 17:00 daily bars, known before the trading day that contains bar ei). Value at bar ei; skip if not finite or <= 0; write it on the signal bar ei-1.\nPARAMETERS. theta in {0.75, 1.25}; exit_utc in {00:55, 02:00}; sl_atr in {0.25, 0.5}; side in {long_only, both}; ny_start = 13:00, ny_end = 21:00, entry_utc = 00:00, vol_window = 20, max_delay_min = 10. Read every tunable from p.",
+    "params": {
+     "theta": 0.75,
+     "exit_utc": "00:55",
+     "sl_atr": 0.25,
+     "side": "long_only",
+     "ny_start": "13:00",
+     "ny_end": "21:00",
+     "entry_utc": "00:00",
+     "vol_window": 20,
+     "max_delay_min": 10
+    },
+    "grid": {
+     "theta": [
+      0.75,
+      1.25
+     ],
+     "exit_utc": [
+      "00:55",
+      "02:00"
+     ],
+     "sl_atr": [
+      0.25,
+      0.5
+     ],
+     "side": [
+      "long_only",
+      "both"
+     ]
+    },
+    "stage_a_market": "USDJPY",
+    "pre_registered": {
+     "expected_design_t_min": 1.5,
+     "expected_avg_r": 0.06,
+     "min_trades_design_per_market": 200,
+     "kill_if": "Stage A on USDJPY: no combination with at least 200 design trades has design avg R > 0 and t >= 1. Also scrap if the long-only arm is <= 0 while the 'both' arm is positive (that would be a generic intraday reversal, a family that has already died, not the importer-plus-retail flow claimed here). A result that exists only at exit 02:00 and not at 00:55 is allowed but must be noted as a slower flow than claimed."
+    },
+    "similar_prior": [
+     "prior_fx_session_rev",
+     "prior_box_breakouts",
+     "prior_nasdaq_lead_lag"
+    ],
+    "why_different": "The session-reversal tests faded the Asian-session extreme currency into London and New York, where no specific contrarian participant exists, and found nothing; the box tests traded breakouts of the pre-Tokyo range; the lead-lag tests used Nasdaq and Nikkei moves to predict USDJPY. This hypothesis fades the New York session move of the pair itself at the Tokyo open, a time and place with a named, documented contrarian participant (Japanese retail margin traders and importers), restricted to the two yen pairs those participants dominate, over a one-to-two-hour horizon.",
+    "parent_slug": null
+   }
+  ],
+  "direction_note": "Cycle 2 judged the London trend-day continuation (scrap, lesson recorded) and registers two settlement-and-liquidity flow hypotheses on yen pairs, the cheapest instruments in the universe. Three findings shaped the choice. (1) The strategy contract is single-market: signals(m, p) sees one instrument, so every cross-market mechanism (equity-hedge month-end flows, risk-off transmission from US100 into carry crosses, the cycle-1 suggestion) is unimplementable until the engine exposes a second market; hold those, do not register them. (2) Index CFDs are cost-dead for intraday work in this engine's design years: slippage is 1 index point per fill, so a US100 round trip cost 7-10 bp in 2012-2014 (US500 10-14 bp) against a 20 bp half-hour sigma; gj-strat already tested Nasdaq intraday momentum (Gao et al.) at lower costs and got -0.12 R in design (results/index_anomalies E4a/E4b). Add that to the scrap knowledge and ask the user whether the CFD slippage model should be in basis points rather than points before any further index hypothesis. (3) Month-end fix flows faded after 2018 in every form tested (EURGBP fix 'fading' in the atlas; the USDJPY equity-hedge model in gj-strat results/monthend_hedge: design t 2.5-4.0, check -0.1 to -0.24 R): do not go back to the month-end fix. If the holiday-shift hypothesis works, the live gotobi leg should also be holiday-adjusted: F.is_gotobi moves weekend dates to Friday but ignores Japanese holidays, so a few gotobi settlements a year are mis-dated. Also worth a later refinement cycle: the atlas's observation that USD rises into the London fix on M-3 days (a second leg for the M-3 oracle), and a 'day after a US holiday' control arm run through this engine to calibrate the fix-flow effect size."
+ },
+ "critic_review": {
+  "reviews": [
+   {
+    "slug": "usdjpy_tokyo_fix_holiday_shift",
+    "verdict": "reject",
+    "reasons": [
+     "The leg traded here has already been measured, and it does not pay even on the days where the claimed flow is strongest. The rationale cites the gotobi edge (+0.10 to +0.14 R, design t 3.2), but that edge is the post-fix SHORT (sell at 00:55 UTC, exit 06:00 UTC: design +0.144 R, check +0.112 R; gj-strat results/patterns_usdjpy). The same pre-declared grid also tested this hypothesis's leg: long into the 09:55 JST fix, stop 0.25 x ATR20, full costs (P1 fix-long). On gotobi days it made +0.013 / +0.007 / -0.016 R in design for 23:00 / 23:30 / 00:00 UTC entries (t 0.42 / 0.24 / -0.68; check -0.008 / +0.010 / -0.016). On all other weekdays it made -0.092 / -0.082 / -0.066 R (t -5.2 / -5.0 / -4.4; check -0.097 / -0.061 / -0.039). Every candidate day in this hypothesis is one of those 'other' days.",
+     "The pre-registered size contradicts the mechanism once it is calibrated on those numbers. Gotobi days carry only +0.05 to +0.10 R more pre-fix drift than other days (about 1-2 pips at the ~21-pip design stop; design ATR20 median 85 pips). That is no more than the round-trip cost of 0.08-0.10 R, so the leg nets about zero where settlement demand is most concentrated. A holiday on a non-gotobi date moves one ordinary day's payments, so a holiday-adjacent day should carry less extra pre-fix demand than a gotobi day, not more. Netting +0.12 R needs about +0.2 R gross (~4 pips), roughly twice the gotobi run-up, and even the +0.05 R kill floor needs more than the gotobi run-up delivers. The expectation based on the programme's own measurements is about -0.05 to 0 R.",
+     "The design does not isolate holiday-shifted ordinary demand as claimed. F.is_gotobi ignores Japanese holidays. When a gotobi date is itself a holiday (May 5 and Dec 31 every year, the 10th/15th/20th when a Happy-Monday holiday lands on them, Mar 20 equinoxes, Apr 30 in 2012/2018/2019), the shifted gotobi settlement lands on exactly the BEFORE/AFTER days this rule trades. Outcome-free calendar count: at least 41 of the 130 design 'either' days (30 of 100 in check) sit next to a holiday that falls on a gotobi date. The holiday adjustment of gotobi has also been measured on the leg that does pay. gj-strat run_gotobi_calendar moved gotobi dates on JP holidays to the previous JP business day: design +0.143 R (t 2.90) against +0.144 R (t 3.16) for the weekend-only rule, check +0.099 against +0.112, and it was not adopted. The live-leg holiday adjustment suggested in the direction note has therefore already been tested.",
+     "The precedent is weaker than stated. The atlas 'day after a US holiday' survivor is a 30-minute Sydney-clock window: 11:30-12:00 Sydney is 00:30-01:00 UTC in the southern summer and 01:30-02:00 UTC in the southern winter. For half the year it lies wholly after the fix, so it is no evidence of a pre-fix run-up on post-holiday days. It survived a 431,424-test pair scan at the scan's Bonferroni edge (mid design t 5.0); as a trade it had t 2.67 in design, 0.96 in check and 153 trades in all. The 'before' arm re-slices an atlas day type ('day before a Japan holiday', scanned on the Tokyo clock with windows ending at the fix). The scrap index asks new clock/calendar ideas for design t >= 3.7; this pre-registration expects 1.5.",
+     "Sample and power, outcome-free. The hardcoded holiday list is correct: it matches a rule-based rebuild of the statutory, substitute, citizens', 2019 enthronement, 2020/21 Olympic and bank-closure days exactly (278 weekday entries). It yields design AFTER 73, BEFORE 59, EITHER 130 days (59 more removed as gotobi) and check 56 / 45 / 100. Backing sd(R) out of the P1 tests gives about 0.55-0.75 at 0.25 x ATR20, so even the hoped-for +0.12 R gives a design t of only about 1.4 (before), 1.6 (after) and 2.1 (either). The single-side arms are not expected to reach the t >= 2 pass bar. The kill rule judges the best of 18 overlapping cells on 59-130 trades, which has a sizeable chance of clearing t >= 1 with no edge, so it tests the best point, not the surface (charter rule 7).",
+     "Concentration and the cost of the early entry. Of the 130 design days, 19 fall in year-end/New Year and 23 in Golden Week (thin, gappy markets), and 22 are Mondays whose 22:30 and 23:30 UTC entries fall on the Sunday reopen; a handful of idiosyncratic days can carry an 18-cell surface. The design median USDJPY spread is 1.0 pip at 22:30 UTC (winter 1.3, p90 2.1) against 0.6 at 23:30-00:00 UTC. The gj-strat clock scan already shows that buying USDJPY at 22:30 UTC for an hour lost -0.080 R (t -8.3) on all weekdays and -0.064 R on gotobi days in design."
+    ],
+    "revisions": "None; rejected. Record in the scrap knowledge that a long into the Tokyo fix is cost-dominated on every day type tested: gotobi about 0 R; other weekdays -0.07 to -0.09 R in design and negative in check (gj-strat P1 fix-long). Also record that the gotobi holiday adjustment (previous-business-day calendar) has been measured and was not adopted. A holiday-settlement idea can only come back under three conditions. It trades the post-fix leg (short 00:55 to 06:00 UTC, where gotobi pays). It trades only days that actually receive a shifted gotobi settlement under the still-untested next-business-day convention. It is pre-registered against the gotobi short's own per-trade R. At about 4-6 such days a year it can only be judged as an adjustment to the existing gotobi leg, not as a stand-alone strategy.",
+    "overfit_risk": "high",
+    "cost_risk": "high",
+    "duplicate_of": "prior_fix_fades",
+    "notes_for_builder": "Not to be built (rejected). If the Director overrides: (1) Build the holiday array with np.array(HOLIDAYS, dtype='datetime64[D]'); the list was verified against the statutory rules. (2) Missed-fix days are listed dates with F.weekday < 5. (3) Get the previous and next weekday with np.busday_offset(d, -1, roll='forward') and np.busday_offset(d, 1, roll='backward'). (4) Candidates are Mon-Fri dates not in the list with F.is_gotobi False. (5) Entry target = d + entry_utc when hh < 12, else (d - 1 day) + entry_utc; ei = np.searchsorted(m.ts, target). Skip the day if ei < 1, ei >= m.n or m.ts[ei] - target > max_delay_min. (6) Find xi the same way for d + exit_utc; skip if xi >= m.n, xi <= ei or it is late. (7) Read ATR20 at ei; that is trading day d for all three entry times, because 22:30 UTC is after 17:00 New York in both seasons. (8) Put sl_dist and entry_long on ei-1 and exit_long on xi-1. (9) Read side, entry_utc, exit_utc, sl_atr and max_delay_min from p. (10) Report results split into shifted-gotobi, year-end, Golden Week and other days."
+   },
+   {
+    "slug": "jpy_tokyo_open_contrarian_flow",
+    "verdict": "reject",
+    "reasons": [
+     "This is the same family as dead entries, with only a participant label added. Fading the previous session's move when the next session's participants arrive is prior_fx_session_rev: fading the Asia-session extreme at the London open found no reversal even on mid prices (base reversal variant mid-to-mid about -0.001 R) and lost after costs. Tokyo-hours fades on USDJPY have also lost: the gj-strat quiet-hours Bollinger fade (22:00-06:00 UTC) made -0.062 R (t -3.4) in design and -0.068 R in check. This cycle's own lesson puts session reversal in the dead pile. Charter rule 8 requires a clearly different mechanism, and the named participants do not supply one (next reason).",
+     "The timing premise is not supported. Japanese retail margin accounts trade mostly after Tokyo working hours, which is the London afternoon and New York morning, inside the 13:00-21:00 UTC window being faded. Their documented contrarian behaviour is measured against the day's move and already acts during the New York session; it does not arrive as a burst at 09:00 JST. Importers' dollar buying concentrates into the 09:55 JST fix on settlement days (the gotobi flow); their price-sensitive buying is typically left as resting orders with Tokyo banks that fill during the fall itself. Both groups are present on both sides of the window. On Japanese holidays, which the rules do not exclude, Tokyo institutions are absent from the open altogether.",
+     "The required effect is too large relative to costs. The unconditional long in this window already loses after costs. gj-strat P1 fix-long (00:00 UTC to the 00:55 fix, all weekdays, SL 0.25 x ATR20) made -0.052 R (t -4.1), and the clock scan's buy from 00:00 to 01:00 UTC made -0.074 R (t -5.6) in design. A round trip at the Tokyo open costs about 1.65 pips on USDJPY (design median spread 0.6 / 0.5 pips at 00:00 / 00:55 UTC). On AUDJPY it costs about 2.5 pips (spread 1.5 / 1.3; the 0.9 quoted is the 2022-23 all-hours median). That is 0.08-0.10 R at 0.25 x ATR20, with design ATR20 medians of 85 and 103 pips. To net +0.06 R, the long arm needs about 3 pips gross per trade, so the first Tokyo hour would have to retrace about 5-6% of the New York move on trigger days. That implies a correlation of roughly -0.15 to -0.2 between the 8-hour New York return (sigma about 31 pips) and the next 55 minutes (sigma about 10 pips), and more at 0.5 x ATR20. Measured FX predictability here is an order of magnitude smaller: USDJPY lag-1 autocorrelation -0.002 at H1 and -0.014 at D1, and no reversal before costs at the Asia-London boundary.",
+     "The pre-registration is internally inconsistent. Outcome-free design trigger counts (signal only, no returns): USDJPY theta 0.75 long 291 / both 613, theta 1.25 long 151 / both 309; AUDJPY 303 / 632 and 162 / 311. The primary long-only arm at theta 1.25 falls below the 200-trade minimum on both markets (4 of the 8 cells per market). The claim of roughly 400 design trades per market at 1.25 sigma is wrong: it is about 310 for both sides and about 155 for longs only.",
+     "Calendar confounding and an asymmetric kill rule. About a third of the long trades fall on gotobi days (USDJPY 81 of 291 and 48 of 151; AUDJPY 100 of 303 and 52 of 162). On gotobi days JPY weakens into the 09:55 fix in every JPY cross and recovers afterwards. The long arm and the short side of 'both' therefore meet a known flow in opposite directions, and the 02:00 exit adds the post-fix reversal against the longs. The kill rule scraps only 'long <= 0 while both > 0'. The reverse pattern (long > 0, both <= 0), which unconditional drift or gotobi would produce, would be read as 'importer plus retail buying after falls', so the claimed asymmetry cannot be falsified. Large New York moves also cluster on US data, FOMC and auctions inside 13:00-21:00 UTC, and moves driven by information do not revert (prior_cb_drift; prior_cross_zfade: 2-sigma moves kept running)."
+    ],
+    "revisions": "None; rejected. A Tokyo-open idea should only be registered around a forced flow whose timing is set by the clock or the calendar. It must be pre-registered against the unconditional trade with the same entry, exit, stop and days, which already loses about 0.05-0.07 R here. It should exclude gotobi days and Japanese holidays. Before compute is spent, it needs a back-of-envelope check that the implied predictability (gross edge needed per trade divided by the window sigma) is plausible.",
+    "overfit_risk": "medium",
+    "cost_risk": "high",
+    "duplicate_of": "prior_fx_session_rev",
+    "notes_for_builder": "Not to be built (rejected). If the Director overrides: (1) For each trade date d (Tue-Fri), i13 = F.first_bar_at_or_after(m, d-1, 13, 0) - 1, and i21 likewise for 21:00. (2) Require i >= 0, m.ts[i] < target and target - m.ts[i] <= 15 minutes. (3) M = ln(bid_c[i21] / bid_c[i13]). (4) sigma = std (ddof 1) of the previous p['vol_window'] finite M values, excluding the current day; loop over days and skip until enough history exists. (5) Trade only if |M| >= theta * sigma and M != 0; take shorts only when side == 'both'. (6) Entry bar ei = first bar at or after d + entry_utc, within max_delay_min. Put the signal and sl_dist on ei-1 and read ATR20 at ei. (7) Put exit_long / exit_short on xi-1. (8) Read theta, exit_utc, sl_atr, side, ny_start, ny_end, entry_utc, vol_window and max_delay_min from p. (9) Report gotobi and non-gotobi days separately."
+   }
+  ]
+ },
+ "overview": {
+  "hypotheses": {
+   "rejected": 3,
+   "scrap": 22
+  },
+  "trials": 84,
+  "holdout_touches": 0,
+  "spend_usd": 0.0
+ },
+ "goal_reached": false
+}

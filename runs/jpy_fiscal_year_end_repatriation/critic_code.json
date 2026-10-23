@@ -1,0 +1,26 @@
+{
+ "verdict": "approve",
+ "issues": [
+  {
+   "severity": "minor",
+   "where": "signals(): `if ei < 1 or ei >= m.n or xi >= m.n or xi <= ei: continue` and `if m.ts[xi] - (d_us + np.timedelta64(xh * 60 + xm, \"m\")) > exit_guard: continue`",
+   "issue": "Whether the 00:00 entry is taken depends on the existence and timestamp of the exit bar about 24 bars (6 h) after the signal bar. This is a dependence on future data availability, not on price. The rules ask for exactly this, and it is the same pattern the oracle modules use. I measured its effect on M15 data from 2010 to 2023: on USDJPY, EURJPY, AUDJPY and GBPJPY the guards fire only on 2013-01-01 (exit guard, EURJPY and AUDJPY) and 2023-12-25 (entry delay, GBPJPY). Neither date falls in any selected window of any cell, so the effect on results is zero. A truncation probe that landed between sig and xi on a selected date would flag this as a mismatch. I reproduced the pipeline's stage-0 leak_report on USDJPY M15 up to 2024-01-01 with the spec defaults and with the ctrl and mar_sep cells of both legs. The probes land at k=174674 (2016-12-29 06:30) and k=314413 (2022-08-08 07:45), outside every window, and all runs pass with 0 mismatches, so G0 will not give a false scrap.",
+   "fix": "No change is needed for this run because the module follows the rules as written. If the module is ever revised, drop the future-dependent skip and add a backstop that uses no future data: always enter, set exit_*[xi-1] when xi < m.n, and set max_bars[sig] = 6h/15m + 4 = 28 so a data gap cannot stretch the hold."
+  },
+  {
+   "severity": "minor",
+   "where": "`_EXIT_GUARD_MIN = 60` (module constant)",
+   "issue": "The 60-minute exit-bar guard is hard-coded instead of read from p. The rules fix it at 60 and do not list it as a parameter, so this is acceptable. Still, the charter says every tunable should be read from p.",
+   "fix": "Optional: add \"exit_guard_min\": 60 to PARAMS and read int(p[\"exit_guard_min\"]). Keep it out of GRID."
+  },
+  {
+   "severity": "minor",
+   "where": "Expected counts in the rules (ye_short ctrl n10 = 471)",
+   "issue": "The module gives 472 for ye_short ctrl n10 in the design years, not the 471 in the brief. The data starts on 2009-12-31, so ATR20 becomes finite on 2010-01-28. Two of the ten January 2010 slots survive the warm-up (Jan 28 and Jan 29), where the brief assumed one. The date selection is correct. Every other count matches exactly: ye_short mar 40/80, mar_sep 80/160, ctrl 237/472; ny_long mar 40/80, mar_sep 80/160, ctrl 200/400.",
+   "fix": "No code change. Use 472 as the reference count in the stage-A sanity check."
+  }
+ ],
+ "lookahead_risk": "Low. Date selection is calendar-only: kth_last_weekday and np.busday_count on UTC dates, plus month numbers taken from datetime64[M]. These do not depend on prices or on bar counts. The stop reads atr_prev (shifted by one trading day) at the entry bar ei. I checked that sig = ei-1 always falls in the same NY-17:00 trading day as ei, so ATR20[ei] is known when sig closes. The fill is at the open of ei, and the exit flag sits on xi-1, so the position closes at the open of the first bar at or after 06:00 UTC. No centred windows, no full-sample statistics, no reads of bar i+1 prices. The only dependence on the future is the rule-mandated skip on the exit bar's existence and timestamp; it never fires on a selected date in 2010-2023 on any of the four markets (see issue 1). The automated truncation, perturbation and determinism tests pass. I reproduced the pipeline's stage-0 leak test on the 2010-2023 USDJPY horizon for the defaults and four other cells, and all pass with 0 mismatches.",
+ "matches_rules": true,
+ "notes": "Verified by running the module on USDJPY M15 for the design years. Entries are always at 00:00 UTC and exits always at the 06:00 UTC open (exit minute 360 for every trade). The months selected are exactly the leg's set: ye_short mar {3}, mar_sep {3,9}, ctrl {1,2,5,7,8,11}; ny_long mar {4}, mar_sep {4,10}, ctrl {2,6,8,11,12}. Only weekday entries occur, sl_dist > 0 on every entry, and the opposite side is never signalled. month_of = datetime64[M] as int mod 12 + 1 is correct (1970-01 maps to 1). The ny_long rank np.busday_count(first_of_month, d) counts the weekdays strictly before d, as specified. ye_short uses 0 <= k < n_days with k from F.kth_last_weekday, as specified. Unknown leg or months values raise ValueError. Every GRID key (leg, months, n_days, sl_atr) and the fixed keys (entry_utc, exit_utc, max_delay_min, atr_n, start) are read from p, and PARAMS holds defaults for all of them. entry_type, valid_bars, tp_dist and max_bars keep the Signals defaults (0, 1, NaN, 0), which match the rules. Timezone: the window is 00:00-06:00 UTC = 09:00-15:00 JST on the same calendar date. Japan has no DST, so the fixed UTC times are right. The M15 data for these four markets looks dense, so the 10-minute entry-delay guard and the 60-minute exit guard almost never fire. Side note for the Director: the 00:00 entry comes before the 00:55 Tokyo fix, so gotobi days inside the March and September windows overlap the known gotobi USD-buying flow. That flow works against ye_short and with ny_long. The pre-registered gotobi-removal line in the report is the right control and should be read for each leg."
+}

@@ -1,0 +1,150 @@
+{
+ "static": {
+  "ok": true,
+  "issues": []
+ },
+ "import": {
+  "ok": true,
+  "error": null,
+  "path": "D:\\Traders sir\\strategies\\auto\\jpy_retail_dipbuy_fragility.py"
+ },
+ "dynamic": {
+  "ok": true,
+  "issues": [],
+  "entries": 137,
+  "leak": {
+   "ok": true,
+   "truncation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43669,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "perturbation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43669,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 43669,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "determinism": {
+    "ok": true,
+    "mismatches": 0,
+    "first_mismatch": -1,
+    "fields": ""
+   },
+   "ext_release": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 23,
+      "release": "2010-01-01T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 12526,
+      "release": "2011-12-31T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 24994,
+      "release": "2013-12-31T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 37446,
+      "release": "2015-12-31T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 49911,
+      "release": "2017-12-29T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 62363,
+      "release": "2019-12-31T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 74829,
+      "release": "2021-12-30T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 87316,
+      "release": "2023-12-29T00:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "n_entries": 137,
+   "aux_markets": [],
+   "ext_series": [
+    "tfx_daily"
+   ]
+  }
+ },
+ "ok": true
+}

@@ -1,0 +1,47 @@
+{
+ "slug": "boj_etf_lunch_bid_jp225",
+ "title": "BoJ ETF purchase flow: buy JP225 at the Tokyo lunch break when the morning session is down versus the previous close, exit before the cash close",
+ "family": "central_bank_flow_index",
+ "rationale": "From December 2010 to March 2021 the Bank of Japan bought equity ETFs under a rule the market learned quickly: on days when the TOPIX fell in the morning session relative to the previous day's close (roughly -0.2% to -0.5% and worse), the BoJ placed purchase orders through trust banks that were executed in the afternoon session, with the daily amount (JPY 12-70 billion, 2-4x that after 2016 and in 2020) published after the close. Research on the programme (Harada and Okimoto 2019; Charoenwong, Morck and Wiwattanakantang 2021; Barbon and Gianinazzi 2019) documents a measurable price lift on purchase days concentrated in the afternoon session, and a front-running pattern where dealers buy during the lunch break once the morning decline makes a purchase likely. Who trades: the BoJ's trust banks are forced buyers of a fixed yen amount regardless of price; dealers and prop desks front-run them during the 11:30-12:30 JST lunch; the sellers are the morning's liquidators. Why it shows up at this time: the trigger is only known at 11:30 JST and the execution is confined to the 12:30-15:00 JST afternoon session. The CFD trades through the lunch break on Osaka futures, so a retail trader can buy at 11:30 JST and sell before the 15:00 JST cash close; the hold is 2-3.5 hours in the cheapest hours of JP225 (median spread 7 points against a 400-point ATR20, about 0.04 R all-in at a 0.5 x ATR20 stop). The design years 2012-2017 cover the fully active programme (the index feed has no Tokyo-morning bars in 2015-2017, so most design trades will come from 2012-2014 plus 2016-2017 afternoons where the 02:30 UTC bar exists); the check period 2018-2020 is the peak-purchase era and 2021-2023 is the wind-down (purchases only on drops of about 2% or more), so a genuine effect should show a visible fade in the last three check years, and that is pre-registered here as expected rather than as a failure. A k = 0 arm (buy every day at lunch with no morning filter) is included as the placebo: index drift would make the control arm as good as the filtered arms; a BoJ flow would not.",
+ "markets": [
+  "JPNIDXJPY"
+ ],
+ "aux_markets": [],
+ "timeframe": "M15",
+ "rules": "All times UTC; Tokyo has no daylight saving so these never shift. Bars: M15 on JPNIDXJPY (bid/ask in index points). Bars are sparse; always locate bars by timestamp.\n\nREFERENCE CLOSE (previous cash close): for each UTC date D, C_prev = bid close of the last bar whose close time is at or before 06:00 UTC on the most recent earlier UTC date D' (D' < D, D - D' <= 4 calendar days) that has at least one bar closing between 05:00 and 06:00 UTC inclusive. If no such D' exists, no trade on D.\n\nMORNING MOVE: for UTC date D, let S be the last bar whose close time is at or before 02:30 UTC on D (= 11:30 JST, the end of the Tokyo morning session) and whose close time is after 02:00 UTC on D (so a stale overnight bar does not stand in for the morning close). If no such bar exists, no trade on D. r_morn = 100 * (bid_c[S] / C_prev - 1), in percent.\n\nENTRY: on bar S, if r_morn <= -k (k in percent, k = 0 means every day) and the weekday of D is Monday to Friday, signal entry_long[S] = True with entry_type 0 (market at the next bar's open, i.e. during the lunch break), valid_bars 1. One trade per UTC date; while a position is open new entries are ignored by the executor.\n\nSTOP: sl_dist[S] = sl_atr * ATR20_prev, where ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar S (known before the trading day starts). If ATR20_prev is NaN, no trade. tp_dist = NaN (no target).\n\nEXIT: time exit at exit_utc (string \"HH:MM\", parsed with F.parse_hhmm): set exit_long = True on the last bar of UTC date D whose close time is at or before exit_utc, provided that bar's close time is after the entry signal bar's close time; the executor closes the position at the open of the following bar. As a safety net also set max_bars[S] to the number of M15 bars from S to 06:00 UTC plus 4 (so a missing exit bar cannot leave the position open overnight).\n\nNo pyramiding, no shorts, no other filters.",
+ "params": {
+  "k": 0.5,
+  "sl_atr": 0.5,
+  "exit_utc": "06:00"
+ },
+ "grid": {
+  "k": [
+   0.0,
+   0.5,
+   1.0
+  ],
+  "sl_atr": [
+   0.5,
+   1.0
+  ],
+  "exit_utc": [
+   "04:30",
+   "06:00"
+  ]
+ },
+ "stage_a_market": "JPNIDXJPY",
+ "pre_registered": {
+  "expected_design_t_min": 2.0,
+  "expected_avg_r": 0.1,
+  "min_trades_design_per_market": 80,
+  "kill_if": "Design avg R at k = 0.5 and at k = 1.0 (at the same stop and exit) is <= 0, or design t < 1, or the k = 0 control arm is within 0.03 R of the best filtered arm at the same stop and exit (then the result is index drift, not BoJ flow). Expected shape: filtered arms beat the control by at least 0.05 R in design; check years 2018-2020 positive, 2021-2023 near zero. A check period that is positive only because of 2021-2023 contradicts the mechanism and is also a kill."
+ },
+ "similar_prior": [
+  "prior_index_meanrev",
+  "prior_eq_overnight_drift",
+  "prior_nasdaq_intraday_momentum",
+  "prior_fomc_cycle"
+ ],
+ "why_different": "The scrap index's index work is close-to-close dip buying with 1-10 day holds (index_meanrev: RSI and big-down-day rules on Nasdaq/S&P/Nikkei), overnight drift at the European open on US indices, US intraday momentum, and Fed-cycle drift. None of them conditions on a named, non-price-sensitive buyer with a public trigger and a fixed afternoon execution window on the Nikkei. This is a flow test, not a reversal test: the trade is a 2-3.5 hour intraday hold inside the Tokyo cash session, the trigger is the morning-session return versus the previous close exactly as the BoJ used it, the placebo arm (k = 0) separates flow from drift, and the pre-registration predicts a fade when the programme was wound down in 2021 instead of treating it as a gate failure. Cost per trade is about 0.04 R, well under the 7-14 bp that killed US index intraday ideas, because JP225 spreads are 7 points against a 400-point daily range.",
+ "parent_slug": null
+}

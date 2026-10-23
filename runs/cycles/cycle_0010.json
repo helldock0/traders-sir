@@ -1,0 +1,183 @@
+{
+ "cycle": 10,
+ "finished": "2026-10-14T06:10:56+00:00",
+ "direction_note": "Cycle 10 (owned by the fork session; the loop session stood down). Judgments entered: fx_surprise_against_crowd and jpy_retail_dipbuy_fragility scrapped with the cycle-9 lessons. Proposed two implied-vol state tests on the parked legs; the Critic rejected vix_state_tokyo_box_breakout (the box's per-trade sigma of about 3.2 R makes any filter increment unmeasurable at the pre-registered margins; arms not nested; three of four cells under the trade minimum) and sent vix_state_gotobi_fix_reversal back for revision, applied in full before any run (runs/vix_state_gotobi_fix_reversal/revision.md): common sample, one VIX median split, the union ATR-high or VIX-high as the only validated cell, a 2 x 2 ATR x VIX stage A table, a non-gotobi placebo, kill rules K1-K5 on the increment. Built (checker ok first time, design counts matched the Critic's within a few days), code review approved, tested: the pipeline marks the union cell a CANDIDATE (design n 320, +0.173 R, t 2.56; check n 293, +0.144 R, t 2.18; walk-forward +0.171 R) because every gotobi subset passes the absolute gates, but the pre-registered increment rules fail and the Director's decision for the next cycle is SCRAP, no promotion, no holdout touch: K1 the stratified VIX effect E is +0.003 R net in design (month-cluster SE 0.12; gross +0.002) with the strata of opposite sign (ATR-high stratum: VIX-high minus VIX-low -0.177 R; ATR-low stratum +0.142 R), so the VIX-high state pays only on ATR-low gotobi days and costs on ATR-high days, which is not a risk-appetite effect; K3 the gotobi VIX effect (+0.002 R) is below the placebo effect on non-gotobi days (+0.073 R, SE 0.06), so what VIX-high lift exists is a general Tokyo-morning USDJPY drift after high-VIX US sessions, not a fix effect, and under the pre-registration it may not be registered as a standalone VIX short (snooped flip; the US-shock-to-Tokyo family is dead); K4 E in check is -0.039 R and the union's check t (2.18) exceeds the ATR arm's (1.94) only through the ATR-low VIX-high stratum that K1 disqualifies. All nine stage A cells are in research.sqlite (hypothesis_id 43) and the rule arithmetic in runs/vix_state_gotobi_fix_reversal/posthoc.md. Lesson for the scrap index: the implied-volatility state (VIX trailing-median split) adds no fix-specific information to the gotobi short at the 0.2 R level; the union ATR-or-VIX is faster only because it adds ATR-low gotobi days, whose positive design result reverses nothing but is not a VIX effect; do not retry with other VIX windows, EVZ, VXN, or on the M-3 leg (one trade a month, no power). Programme status after cycle 10: 36 scrap, 7 rejected, 0 holdout touches, every external dimension with design-period history now measured on at least one mechanism (calendar surprises x positioning, TFX daily open interest, implied vol x the parked gotobi), all negative; the 60-day goal needs a basket with monthly Sharpe near 2 and the parked basket is at 0.4. Recommendation to the user: stop the loop; trade or park the basket as decided; only a named, dated flow on a cheap instrument, or a licensed data source the programme does not have (consensus feed for live use, options positioning, dealer flow), justifies another cycle.",
+ "director_events": [
+  "fx_surprise_against_crowd: scrapped by director",
+  "jpy_retail_dipbuy_fragility: scrapped by director"
+ ],
+ "director": {
+  "judgments": [
+   {
+    "slug": "fx_surprise_against_crowd",
+    "decision": "scrap",
+    "lesson": "A crowded leveraged-fund book is not forced out over the hours after an adverse high-impact surprise. On EURUSD (24 cells, three arms trading the surprise direction 15 minutes after the release, same-day or next-day exit), every against-crowd cell lost in design 2011-07 to 2017 (-0.005 to -0.143 R; -0.097 R, t -2.05 on 98 trades at q 0.8 / z 1.0; -0.135 R, t -2.53 on 67 at q 0.9), every uncrowded cell lost (-0.056 to -0.173 R, t to -2.81), the with-crowd cells were about zero, so the pre-registered asymmetry is reversed; in check all arms sit near zero with mixed signs. The surprise-direction move from 15 minutes after a release to the close partially reverses in design and is noise in check; the fade mirror is snooped (design gross 0.06-0.10 R, gone in check) and is never registered. Positioning x surprise at the intraday-to-next-day horizon is measured and closed; do not retry with other quantiles, z thresholds, pairs as primary, or a pooled stage A.",
+    "notes": "Stage A kill on the GA floor; every cell is in research.sqlite (hypothesis_id 40). Judgment adopts the cycle-9 Director's reading in full."
+   },
+   {
+    "slug": "jpy_retail_dipbuy_fragility",
+    "decision": "scrap",
+    "lesson": "Heavy retail accumulation (TFX Click 365 open interest growth of 10-15 percent over a five-day decline of 1-1.5 x ATR20) marks dips that REBOUND, not forced-liquidation cascades: on AUDJPY every heavy cell lost in design (-0.24 to -0.44 R, t -2.1 to -2.7; heavy10 / k 1.0 / 2-day hold -0.264 R on 100 trades) while the light-accumulation control was about zero, and in check the difference flipped sign (heavy near zero, light -0.20 to -0.28 R), so there is no stable relation between the retail-book state and the next days. The stable fact is that a short yen cross at the Tokyo open after a multi-day decline earns nothing or loses (10 of 12 cells negative over design plus check), the same Tokyo-morning bounce cycle 3 saw intraday. The long mirror (design t 2.1-2.7, check -0.09 to +0.18 R) is a snooped flip of the 2010-2017 carry regime and is banned by pre-registration R7. The daily TFX open-interest dimension is measured for the liquidation mechanism; do not retry with one-day accumulation, residualised open interest, other crosses, or longer holds.",
+    "notes": "Stage A kill on the GA floor; every cell is in research.sqlite (hypothesis_id 41). Judgment adopts the cycle-9 Director's reading in full."
+   }
+  ],
+  "hypotheses": [
+   {
+    "slug": "vix_state_tokyo_box_breakout",
+    "title": "Implied-volatility state for the USDJPY Tokyo-open box breakout: does the global risk gauge add to the approved realised-vol filter?",
+    "family": "vol_state_parked_leg_box",
+    "rationale": "The parked basket's largest leg is the Tokyo-open box breakout (05:00-05:59 IST box, stop orders at 06:00 IST, 1 x box stop, 9 x target). It is traded only when the pair's own ATR20 is above its 250-day median (the approved realised-vol filter), because breakouts follow through when the overnight New York positioning is being unwound in size at the Tokyo open and the target is far relative to the box. Realised ATR lags the state it measures; the CBOE VIX close, published before the Tokyo open, is a forward-looking gauge of the same risk-transfer activity (global de-risking and re-risking of carry and equity books that is executed through USDJPY in the Tokyo morning). Who trades: Japanese institutions and foreign macro desks adjusting yen exposure at the Tokyo open after a US session; who is on the other side: the box-range liquidity providers whose stops sit at the box edges. The question is pre-registered as incremental: a VIX-high state must beat the approved ATR filter, not just the unfiltered box. The implied-vol series is one of the two external dimensions not yet measured; the carry work used monthly VIX gates only. The engine version is the first trade of the day without the approved break-even move and without the re-entry (the Signals contract cannot express the path-dependent re-entry, and break-even is a run-level option the pipeline does not set), so absolute R is lower than the approved leg's; every arm shares these mechanics, so the state comparison is clean.",
+    "markets": [
+     "USDJPY"
+    ],
+    "aux_markets": [],
+    "ext_series": [
+     "vol"
+    ],
+    "timeframe": "M1",
+    "rules": "Box day: every weekday with at least p['min_box_bars'] traded bars whose open time is in [p['box_start_utc'], p['order_utc']) UTC (23:30 to 00:29 UTC = 05:00-05:59 IST; IST has no daylight saving). box_high = max bid_h, box_low = min bid_l over those bars; box = box_high - box_low; spread = ask_c - bid_c of the signal bar. Signal bar = the last bar whose close time is at or before p['order_utc'] (00:30 UTC) on that date; it must close at or after 00:30 UTC minus 5 minutes (skip the day otherwise).\nOrders (both placed on the signal bar, an OCO pair by contract): entry_type stop; entry_price_long = box_high; entry_price_short = box_low; sl_dist = box + spread (must be > 0); tp_dist = p['rr'] x sl_dist; valid_bars = the number of bars from the bar after the signal bar up to and including the last bar whose open time is before p['expiry_utc'] (05:30 UTC = 11:00 IST) on that date (count by timestamps, bars are sparse; at least 1); max_bars 0 (the trade runs until stop or target, overnight allowed); no re-entry; one position at a time (a new day's orders are ignored while a trade is open, by contract).\nState at the signal bar (closed-bar information only): ATR filter 'atr': ATR20 = F.atr_prev(F.daily_bars(m), p['atr_n']) known at the day start, and atr_state = ATR20 >= median of the previous p['atr_window'] daily ATR20 values (the approved filter; needs p['atr_window'] prior values). VIX state: v = F.ext_series(m, 'vol') column 'vix' (NaN rows dropped); row-wise causal percentile pct_j = 100 x share of the last min(p['vix_window'], available) VIX closes up to and including row j that are <= vix_j, defined only once at least p['vix_min_obs'] closes exist; mapped to bars with the ext_asof rule (last row with ts_avail <= bar close; the VIX close is usable from 21:30 UTC, so the 00:30 UTC signal sees the previous US session's close). Arms (p['state']): 'all' = no state; 'atr' = atr_state; 'vix_hi' = pct >= p['vix_pct']; 'vix_lo' = pct <= 100 - p['vix_pct'] (mirror control); 'atr_vix' = atr_state and pct >= p['vix_pct']. Days with an undefined state are skipped in every arm except 'all'.\nGrid: spec grid (hypothesis arms only) state [vix_hi, atr_vix] x vix_pct [70, 85] = 4 cells; the stage A grid adds state [all, atr, vix_lo] at the same vix_pct values (the Director amends specs/auto/<slug>.json after the Critic review; 'all' and 'atr' repeat over vix_pct). Compare quantised quantities with a 1e-9 relative tolerance. Start p['start'].",
+    "params": {
+     "state": "vix_hi",
+     "vix_pct": 70,
+     "rr": 9.0,
+     "vix_window": 250,
+     "vix_min_obs": 120,
+     "atr_n": 20,
+     "atr_window": 250,
+     "box_start_utc": "23:30",
+     "order_utc": "00:30",
+     "expiry_utc": "05:30",
+     "min_box_bars": 30,
+     "start": "2010-01-01"
+    },
+    "grid": {
+     "state": [
+      "vix_hi",
+      "atr_vix"
+     ],
+     "vix_pct": [
+      70,
+      85
+     ]
+    },
+    "stage_a_market": "USDJPY",
+    "pre_registered": {
+     "expected_design_t_min": 2.0,
+     "expected_avg_r": 0.12,
+     "min_trades_design_per_market": 300,
+     "expected_trades_per_month": 6.0,
+     "kill_if": "In design on USDJPY, read from every stage A cell in research.sqlite: the best vix_hi cell (by design t) does not exceed the 'atr' arm's avg R by at least +0.05 R, or does not exceed it in both halves 2010-2013 and 2014-2017; or atr_vix does not exceed 'atr' by at least +0.05 R at the same vix_pct; or vix_lo is at least as good as vix_hi at the same vix_pct (then the VIX level is not the state); or the best vix cell has fewer than 300 design trades. 'all', 'atr' and 'vix_lo' are reference arms and are never promoted; a vix_lo > vix_hi result is never registered as a low-vol hypothesis. Speed: the approved leg scores about 0.6 (0.16-0.20 R on 10 trades a month); a state that halves the trades cannot raise the score unless it removes losers, so this leg tests whether implied vol improves the basket's Sharpe, not whether it reaches 0.7 alone."
+    },
+    "similar_prior": [
+     "prior_box_breakouts and the gj-strat box family (usdjpy_grid, usdjpy_boxfilter, box_dd_filters, costs_gotobi vol filter: realised-ATR gating is the approved filter)",
+     "prior_index_vol_timing and fx_carry crash-risk switches (monthly VIX gates on index and carry portfolios)"
+    ],
+    "why_different": "No prior test used an implied-volatility state on the Tokyo-open box; the realised-ATR filter is the control, so only the increment of the forward-looking gauge is being measured; the horizon is the approved intraday-to-overnight box trade, not a monthly portfolio.",
+    "parent_slug": null
+   },
+   {
+    "slug": "vix_state_gotobi_fix_reversal",
+    "title": "Implied-volatility state for the gotobi Tokyo-fix short: does the global risk gauge add to the approved realised-vol filter?",
+    "family": "vol_state_parked_leg_gotobi",
+    "rationale": "The gotobi short (sell USDJPY at the 09:55 JST fix on settlement days, exit 06:00 UTC, stop 0.25 x ATR20) earns the post-fix reversal of the importer USD demand that banks front-run into the fix; the approved version trades it only when ATR20 is above its 250-day median, because the reversal scales with how far the front-running pushed the rate. The reversal is compensation to the dealers who provide the fix liquidity, and that compensation should scale with the risk they carry, which implied volatility prices directly and ahead of realised ATR. As for the box, the question is incremental: a VIX-high state (the previous US session's VIX close, usable from 21:30 UTC) must beat the approved ATR filter and the unfiltered leg. Power is limited (about 2.6 vol-filtered trades a month, so a VIX-high half holds 100-200 design trades), which the kill rule states; a null here closes the implied-vol question for the gotobi leg at the 0.1 R level only.",
+    "markets": [
+     "USDJPY"
+    ],
+    "aux_markets": [],
+    "ext_series": [
+     "vol"
+    ],
+    "timeframe": "M1",
+    "rules": "Base trade exactly as strategies/oracle/gotobi_short.py: gotobi dates (5th, 10th, 15th, 20th, 25th and month-end, weekend dates moved back to Friday, weekdays only, from p['start']); SELL at market at the first bar at or after p['entry_utc'] (00:55 UTC) within p['max_delay_min'] minutes; exit at the open of the first bar at or after p['exit_utc'] (06:00 UTC) the same day; stop = p['sl_atr'] x ATR20 (F.atr_prev(F.daily_bars(m), p['atr_n'])), no target; one position at a time.\nState at the signal bar: atr_state = ATR20 >= median of the previous p['atr_window'] daily ATR20 values (the approved filter). VIX percentile exactly as in vix_state_tokyo_box_breakout: row-wise causal percentile of the VIX close over the last min(p['vix_window'], available) closes with at least p['vix_min_obs'] closes, mapped to bars with the ext_asof rule. Arms (p['state']): 'all', 'atr', 'vix_hi' (pct >= p['vix_pct']), 'vix_lo' (pct <= 100 - p['vix_pct'], mirror control), 'atr_vix' (both). Days with an undefined state are skipped in every arm except 'all'.\nGrid: spec grid state [vix_hi, atr_vix] x vix_pct [50, 70] = 4 cells; the stage A grid adds state [all, atr, vix_lo] at the same vix_pct values (amended after the Critic review). Compare quantised quantities with a 1e-9 relative tolerance.",
+    "params": {
+     "state": "vix_hi",
+     "vix_pct": 50,
+     "entry_utc": "00:55",
+     "exit_utc": "06:00",
+     "sl_atr": 0.25,
+     "max_delay_min": 5,
+     "vix_window": 250,
+     "vix_min_obs": 120,
+     "atr_n": 20,
+     "atr_window": 250,
+     "start": "2011-01-01"
+    },
+    "grid": {
+     "state": [
+      "vix_hi",
+      "atr_vix"
+     ],
+     "vix_pct": [
+      50,
+      70
+     ]
+    },
+    "stage_a_market": "USDJPY",
+    "pre_registered": {
+     "expected_design_t_min": 2.0,
+     "expected_avg_r": 0.2,
+     "min_trades_design_per_market": 90,
+     "expected_trades_per_month": 1.5,
+     "kill_if": "In design on USDJPY, read from every stage A cell in research.sqlite: the best vix_hi cell (by design t) does not exceed the 'all' arm by at least +0.05 R, or atr_vix does not exceed 'atr' by at least +0.05 R at the same vix_pct, or vix_lo is at least as good as vix_hi at the same vix_pct, or the best vix cell has fewer than 90 design trades. Reference arms are never promoted and a vix_lo > vix_hi result is never registered as a low-vol hypothesis. Speed: the approved vol-gotobi scores about 0.3 (0.17 R on 2.6 trades a month); this tests whether implied vol raises the leg's quality, not whether it reaches 0.7."
+    },
+    "similar_prior": [
+     "prior_fix_fades / patterns_usdjpy gotobi family (gotobi_tweaks 40 variants, gotobi_calendar, gotobi_rr, costs_gotobi: the realised-ATR vol filter is the approved state)",
+     "gotobi_usd_check (placebo on non-yen pairs)"
+    ],
+    "why_different": "The gotobi variants measured clock, calendar, exits, stops and realised volatility; none used an implied-volatility state, and the ATR filter is the control so only the forward-looking increment is measured.",
+    "parent_slug": null
+   }
+  ],
+  "direction_note": "Cycle 10 (first after the two external-data negatives of cycle 9, which are entered as scrap with their lessons). Implied volatility is the last external dimension with design-period history that has not been measured, and the user's parked basket is the only edge that exists, so this cycle asks one narrow question twice: does the VIX state add to the approved realised-ATR filter on the two parked legs the engine can express (the Tokyo-open box first trade, and the gotobi fix short), each with the ATR arm as control, a low-VIX mirror arm, and incremental kill rules. Neither can reach the 60-day speed bar alone; a positive result would raise the basket's Sharpe, a null closes the vol-state question for the parked legs at the 0.05-0.10 R level. Pre-release positioning trades (crowd trimming ahead of scheduled events) cannot be built yet: the calendar rows are usable only from the release time, so a schedule-only table with an earlier ts_avail would be an engine and data change for a later cycle. The weekly TFX long/short split has no design-period history and stays a holdout-era diagnostic. If both tests are null, the recommendation is to stop the loop: nine cycles plus 171 prior tests say the only route to an Alpha Swing pass is the parked basket traded with patience, and the 60-day target is not reachable with measured edges."
+ },
+ "critic_review": {
+  "reviews": [
+   {
+    "slug": "vix_state_tokyo_box_breakout",
+    "verdict": "reject",
+    "reasons": [
+     "The increment cannot be measured on this leg. A 1:9 payoff without break-even has a per-trade sigma of about 3.2 R (usdjpy_grid RR9_SLbox1_BEoff_B: +0.074 R at design t 1.08 on 2230 trades). On the actual design day counts, the standard errors of the increments the kill rule reads are about 0.15 R (vix_hi70 vs atr), 0.18 R (atr_vix70 vs atr), 0.20 R (vix_hi85 vs atr) and 0.25 R (atr_vix85 vs atr), and that is before unfilled days and blocked days. The +0.05 R margins are 0.2-0.35 SE. A VIX state with no information clears 'atr_vix > atr + 0.05 R' about 40% of the time. A VIX effect as large as the approved ATR filter's own (about 0.16 R between ATR halves in box_dd_filters, design and check) would show up at only t 0.6-0.8. So a pass would most likely be noise, and a null would close nothing below about 0.3 R. The noise comes from the payoff, not the grid, so no revision fixes it.",
+     "The cells contradict the pre-registration. Design box days 2010-2017 (computed from the store, counts only, data cut 2024-01-01; at least 30 box bars and a signal bar closing within 5 minutes of 00:30 UTC): all 2081, atr 808, vix_hi70 448, vix_hi85 252, atr_vix70 219, atr_vix85 137. These counts are before days with no fill by 05:30 UTC and days skipped behind an open trade. Three of the four hypothesis cells are below the 300-trade minimum, so the 'best vix cell under 300 trades' clause decides the outcome whenever one of them is best. The stated 6 trades a month is really 1.6-4.7. An expected design t of 2.0 at 0.12 R implies a sigma of about 1.4 R. At sigma 3.2 R, 0.12 R on 448 trades gives t 0.8, below the stage A floor, and t 2 would need about 0.3 R.",
+     "The rationale says every arm shares the same mechanics and so the state comparison is clean. It is not clean, for four reasons. (a) The 250-day ATR median first exists on 2010-12-15 with the oracle's nanmedian, or on 2011-01-12 if all 250 values are required (the USDJPY store starts 2009-12-31). So 'atr' and 'atr_vix' have no 2010 days, while 'all', 'vix_hi' and 'vix_lo' include 2010 (about 13% of vix_hi70's design days); this also unbalances the 2010-2013 half. (b) Without break-even or max_bars, RR9 trades run long (usdjpy_grid, check period: median 7.75 h in trade but 1.1 swap nights on average), and the one-position contract drops the next day's orders while a trade is open. Dense arms drop more days than sparse ones, so the arms are not nested, and the dropped days (the days after a trend runner) are a selected set. (c) 1 R is the box, and the box scales with volatility. The roughly 1.2 pips of commission plus slippage is about 0.10 R on an 11-pip box and 0.05 R on a 25-pip box, so a +0.05 R 'state increment' can come from cost-in-R arithmetic alone. (d) vix_hi85 (12% of days) and vix_hi70 (22%) select more tightly than 'atr' (39%), and tighter vol selection raises this box's avg R by itself (box_dd_filters: ATR >= 1.1 x median kept 32% of trades and made 0.33 R in check, against 0.24 R at 1.0 x). Beating 'atr' could therefore reflect selectivity rather than implied vol.",
+     "Protocol mechanics. Stage A rows in research.sqlite carry only design/check/all splits, so the 'both halves 2010-2013 and 2014-2017' clause cannot be read from the stage A cells as written. The pipeline's GA floor uses the best design t over the whole stage A grid, so the 'all' or 'atr' reference arm can carry the hypothesis past the floor even when every VIX cell fails it. Stage B then picks the best VIX cell by design t with the 30-trade default, not 300. Stage C's absolute gates (check > 0, walk-forward > 0, 1.5x costs) pass for almost any box subset, because the box is positive in check in every state.",
+     "Speed. The charter maps a score of 0.7 to a monthly Sharpe of 1, which assumes a per-trade sigma near 0.7 R. The box's sigma is about 3.2 R, so the 0.6 quoted for the approved box is a monthly Sharpe of about 0.17 to 0.25 (vol-box design t 1.59 over 84 months, check t 2.09 over 72), or a charter-equivalent score near 0.15. The box is also the basket's smallest risk leg (0.25% per trade in every recommended mix in runs/basket/speed_report.md, against 3-4% on the vol-gotobi). A +0.10 R increment on about 4 trades a month at 0.25% risk adds about 0.1% a month, against the roughly 8% a month the 60-day target needs. The hypothesis states no path to the speed bar, and none exists.",
+     "What the data do show. The trailing-year VIX percentile and the USDJPY ATR percentile correlate only 0.10 on design box days (0.31 in check). The VIX state is therefore genuinely different from the ATR filter: the ATR-high years 2012, 2013 and 2016 had VIX above its trailing median on only 16-34% of days, and the VIX-high years 2011 and 2014 had low ATR. But the state is persistent: VIX at or above its 70th percentile lasts 7.6 days on average, so vix_hi70's 448 design days are about 60 episodes. The question is well posed, but a 1:9 payoff cannot answer it. Measure it on the gotobi (sigma about 1.07 R); see the companion review."
+    ],
+    "revisions": "No revision restores the power; the variance comes from the 1:9 payoff, not from the grid. If the Director wants a box measurement anyway, it needs a lower-variance outcome, for example a fixed-horizon follow-through trade. That is a different trade with its own registration and its own dead-pile check (prior_box_breakouts: box breakouts without the far target die on costs), and given the speed arithmetic above it is not recommended.",
+    "overfit_risk": "high",
+    "cost_risk": "medium",
+    "duplicate_of": null,
+    "notes_for_builder": "Not to be built. If the rejection is overridden: (1) use a common sample in which every arm, 'all' included, trades only days where both states are defined; (2) read the ATR median and the VIX percentile exactly as in the gotobi notes; (3) report, per arm, how many signalled days were skipped because a trade was still open; (4) report gross R alongside net R."
+   },
+   {
+    "slug": "vix_state_gotobi_fix_reversal",
+    "verdict": "revise",
+    "reasons": [
+     "Worth a cheap measurement, and this is the leg where it can be measured. Per-trade sigma is about 1.07 R (gotobi_tweaks current rule: +0.144 R, t 3.16 on 561 design trades). The VIX state is close to orthogonal to the approved ATR state in design (correlation 0.09 between the two trailing-year percentiles on gotobi days, 0.31 in check), so the increment is identified and is not a relabelled ATR filter. In gj-strat, VIX appears only in the carry, index vol-timing, index mean-reversion and COT tests, never on the box or the gotobi, and no earlier hypothesis in this programme used the vol series.",
+     "As written, the cells cannot meet the pre-registration. Design gotobi days 2011-2017 (counts only, data cut 2024-01-01): all 502, atr 219, vix_hi50 184, vix_hi70 109, atr_vix50 83, atr_vix70 57. Both atr_vix cells are below the 90-trade minimum, so the intersection can never be adopted. The 70 threshold halves the VIX-high strata without a theoretical reason; the approved ATR filter is a median rule.",
+     "The kill rule does not account for speed. The stated success case (0.2 R on 1.5 trades a month, a score of 0.245) is slower than the approved vol-gotobi it would replace (0.17 R x sqrt(2.6) = 0.27). It is also slower than the unfiltered gotobi in design (0.144 R x sqrt(5.8) = 0.35). In costs_gotobi, the ATR filter itself cut the Alpha Swing pass-within-2-months rate from 25.4% to 19.8%, while cutting the 6-month fail rate from 43.6% to 30.9%. An intersection keeping 83 of 219 trades needs 1.62x the 'atr' arm's avg R just to hold the speed, far more than +0.05 R. Under the 60-day goal, the only gate that can raise this leg's speed is the union: trade when ATR is high OR VIX is high (320 design trades, 3.8 a month). The union helps only if the VIX-high days it adds beat the ATR-low days it leaves out. Separately, the first kill clause compares vix_hi with 'all', while the rationale says VIX must beat the ATR filter.",
+     "Confound. VIX-high states follow US equity selloffs, and the scrap index records that yen crosses bounce in the Tokyo morning after a US selloff (jpy_cross_losscut_after_us_shock). Any VIX-conditioned shift in the 00:55-06:00 UTC USDJPY drift would show up in a gotobi short whether or not it has anything to do with the fix, and none of the arms controls for this. A non-gotobi placebo fixes that: the same short on non-gotobi weekdays (1312 design days; the SE of its VIX split is about 0.06 R) separates a fix-specific increment from a VIX-state drift.",
+     "Mechanism. The rationale says implied vol prices the USDJPY risk that fix dealers carry, ahead of realised ATR. In design, VIX does not track USDJPY risk: in 2012, 2013 and 2016, ATR was high on 43-75% of gotobi days while VIX was above its trailing median on only 15-35% of them, and 2011 and 2014 were the reverse (ATR high on 24-26%, VIX high on 49-53%). The testable claim is narrower: global risk appetite changes the size of the front-run inventory that dealers unwind after the fix. The prior for that is modest, so treat this as a measurement, not a likely edge.",
+     "Power, and what a null means. The stratified VIX effect (VIX-high minus VIX-low inside the ATR-high and ATR-low strata, trade-weighted) has a design SE of about 0.10 R (about 0.105 R in check). VIX-high days come in about 90 episodes in design, so trades within an episode are not independent. A null therefore rules out only effects above about 0.2 R. It does not close the question 'at the 0.1 R level' as the rationale says. The direction note's claim that 'a null closes the vol-state question for the parked legs at the 0.05-0.10 R level' is wrong for both legs. The stop-the-loop recommendation should rest on the speed arithmetic (a VIX state on these legs adds at most a few hundredths to the basket's monthly Sharpe of 0.4), not on these nulls.",
+     "Pipeline. With 'all' in the stage A grid (design t about 3), a reference arm passes the GA floor whatever the VIX cells do. Stage C's absolute gates (check > 0, walk-forward > 0, 1.5x costs) pass for any gotobi subset. The increment therefore has to be gated explicitly, in design and in check. Note also that the trailing-year percentile is relative: after the very calm 2017, 88% of 2018 gotobi days are 'VIX-high', so the check-period VIX-high stratum leans on 2018, 2020 and 2022; read the check confirmation together with the by-year table."
+    ],
+    "revisions": "R1 Common sample: every arm, 'all' included, trades only gotobi weekdays from 2011-01-01 on which both the oracle's ATR median and the VIX percentile are defined. All cells then sit inside one day set, and because a gotobi trade never runs into the next day, the strata partition 'all' exactly. R2 One threshold, chosen from theory: vix_pct = 50 only (VIX at or above its trailing 250-close median, the same construction as the approved ATR median rule). V+ = pct >= 50 and V- = pct < 50, a strict complement. Drop the 70 cells and the 'pct <= 100 - vix_pct' arm. R3 Hypothesis cell: the spec grid, and the only cell stages B and C validate, is {state: ['atr_or_vix'], vix_pct: [50]}, i.e. ATR-high or VIX-high (320 design trades, 3.8 a month). It is the only gate that can raise the leg's speed. Minimum: 300 design trades. R4 Stage A grid of 9 cells, all at vix_pct 50, recorded as trials. Gotobi days: 'atr_vix' (ATR-high and VIX-high, 83 design), 'atr_vixlo' (ATR-high, VIX-low, 136), 'natr_vix' (ATR-low, VIX-high, 101), 'natr_vixlo' (ATR-low, VIX-low, 182), 'all' (about 504), 'atr' (219) and 'atr_or_vix' (320). Placebo on non-gotobi weekdays, running the identical short, stop and exit: 'ng_vix' (VIX-high, 495) and 'ng_vixlo' (VIX-low, 817). The reference and placebo arms are never promoted. R5 Kill rule. Every clause must hold, read from the stage A cells, and the GA floor and the kill rule are applied to 'atr_or_vix' and the strata, never to 'all' or 'atr'. K1: the stratified VIX effect E = w_A x (R[atr_vix] - R[atr_vixlo]) + w_N x (R[natr_vix] - R[natr_vixlo]), with each weight equal to that stratum's share of the common sample, is at least +0.10 R in design (about 1 SE, the increment analogue of the stage A floor), and both within-stratum differences are above 0. K2: the union's design t exceeds the 'atr' arm's design t (same period, so the union is faster), and R[natr_vix] exceeds R[natr_vixlo]; without the second part the union could look faster only because ATR-low gotobi days happened to be positive in design. K3: the gotobi VIX effect over all gotobi days (trade-weighted from the strata) exceeds the placebo's (R[ng_vix] - R[ng_vixlo]) by at least +0.05 R. If the placebo effect is as large, the result is a VIX-conditioned Tokyo-morning drift: nothing is registered as a gotobi refinement, and its sign may not be used to register a standalone VIX short (that would be a snooped flip, and the US-shock-to-Tokyo family is dead). K4: before anything is adopted, using the same cells' check rows, E is above 0 in check 2018-2023 and the union's check t is at least the 'atr' arm's check t. This clause is needed because the stage C gates cannot fail a gotobi subset. K5: report E gross of costs as well as net, and with month-clustered SEs. R6 Restate the expectations: union about 3.8 trades a month; expected E between 0 and +0.10 R; union score 0.27-0.33 if E > 0. Record a null as 'no VIX effect larger than about 0.2 R on the gotobi', not as 'implied vol closed'. R7 Restate the mechanism as risk appetite and front-run inventory, not as a forward-looking gauge of USDJPY risk, and keep the clause that a VIX-low result is never registered as a low-vol hypothesis.",
+    "overfit_risk": "medium",
+    "cost_risk": "low",
+    "duplicate_of": null,
+    "notes_for_builder": "Base trade: copy strategies/oracle/gotobi_short.py. Dates come from F.utc_dates, weekdays only, from p['start']. The entry bar ei = F.first_bar_at_or_after(m, dates, 0, 55) must fall within p['max_delay_min'] minutes. Set entry_short on ei - 1 and exit_short on xi - 1, where xi is the first bar at or after 06:00 UTC. sl_dist = p['sl_atr'] x ATR20 at ei. Keep the oracle's guards (ei < 1, xi >= m.n, xi <= ei, ATR not finite or not positive). Day sets: gotobi = F.is_gotobi(dates) for every state except 'ng_vix' and 'ng_vixlo', which use the non-gotobi weekdays (~F.is_gotobi(dates)). ATR state: use the oracle's loop verbatim (for i >= w - 1, med[i] = np.nanmedian(atr_d[i - w + 1:i + 1]) with w = p['atr_window'], and hot = atr_d >= med); the state is undefined where med is NaN. VIX state: build e = F.ext_series(m, 'vol') and sub = F.ext_subset(m, 'vol', np.isfinite(e.column('vix'))). Do not use F.ext_asof on the full table: its US-holiday rows have a ts_avail but a null vix, which would make the next Tokyo morning undefined. Return the empty Signals if sub.n == 0 (truncated leak-test samples). Compute pct[j] = 100 x mean(x[lo:j + 1] <= x[j]) with lo = max(0, j - p['vix_window'] + 1), and NaN if j + 1 - lo < p['vix_min_obs']. A Python loop over about 4,000 rows is fine; never use a full-sample or centred statistic, because the perturbation test catches it. Map pct to bars with k = np.searchsorted(sub.ts_avail, m.close_times(), side='right') - 1 (the F.ext_asof rule), NaN where k < 0, and read it at the signal bar ei - 1. V+ = pct >= p['vix_pct'] - 1e-9 and V- = pct < p['vix_pct'] - 1e-9; ATR-high = hot, ATR-low = not hot. Common sample: in every arm, 'all' included, skip the day unless both states are defined. Arms for p['state']: 'all', 'atr' (ATR-high), 'atr_vix' (ATR-high and V+), 'atr_vixlo' (ATR-high and V-), 'natr_vix' (ATR-low and V+), 'natr_vixlo' (ATR-low and V-), 'atr_or_vix' (ATR-high or V+), 'ng_vix' (non-gotobi, V+), 'ng_vixlo' (non-gotobi, V-). Raise on an unknown state. PARAMS must hold every grid key with defaults state 'atr_or_vix' and vix_pct 50, plus entry_utc, exit_utc, sl_atr, max_delay_min, vix_window 250, vix_min_obs 120, atr_n 20, atr_window 250 and start '2011-01-01'. Expected design counts (2011-2017, within a few days): all about 504, atr 219, atr_vix 83, atr_vixlo 136, natr_vix 101, natr_vixlo 182, atr_or_vix 320, ng_vix about 495, ng_vixlo about 817. A count far from these means the day set or a state is wrong."
+   }
+  ]
+ },
+ "overview": {
+  "hypotheses": {
+   "candidate": 1,
+   "rejected": 7,
+   "scrap": 35
+  },
+  "trials": 264,
+  "holdout_touches": 0,
+  "spend_usd": 0.0
+ },
+ "goal_reached": false
+}

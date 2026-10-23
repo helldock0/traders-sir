@@ -1,0 +1,280 @@
+{
+  "slug": "gold_autumn_physical_demand",
+  "title": "Gold autumn effect out of sample: long XAUUSD on every trading day of September-October (Indian festival and wedding-season physical demand), daily entries",
+  "family": "seasonal_physical_demand_metal",
+  "started": "2026-10-12T13:21:33+00:00",
+  "spec": {
+    "slug": "gold_autumn_physical_demand",
+    "title": "Gold autumn effect out of sample: long XAUUSD on every trading day of September-October (Indian festival and wedding-season physical demand), daily entries",
+    "family": "seasonal_physical_demand_metal",
+    "rationale": "Baur (2013, 'The autumn effect of gold price returns') documents on 1980-2010 data that gold's positive returns concentrate in September and November, and attributes it to physical demand: Indian jewellery buying for the Diwali and wedding season (India was 25-30% of world gold jewellery demand through the 2010s, and dealers restock from August to October), Chinese demand ahead of the October Golden Week, and central-bank and investor hedging into the fourth quarter. The buyers are price-insensitive on the calendar (weddings and festivals do not move), the sellers are bullion banks and ETFs that lean on the flow, and the pressure shows up as a positive drift over the season rather than at a clock time, which is why the flow atlas's intraday windows (which scanned gold by clock and day type, not by month) could not see it. This programme's data starts in 2010, so 2010-2017 is a clean out-of-sample test of a published pre-2010 anomaly, and 2018-2023 a second one. The structure is daily entries at 20:00 UTC with a 24-hour hold and a wide stop, so each trading day in the window is one trade and the sample is about 40 trades a year; the effective independent sample is still eight seasons in design, which is why the pre-registered t is modest. A control window is pre-registered inside the grid: March-April, the season Baur finds weakest, must not show the same drift. Costs are about 0.01 R per trade (33 pips of spread plus slippage against a 2 x ATR20 stop of about 4500 pips). Critic revisions accepted before any run: the primary window is the published September-and-November months, the control is all other months of the same years (April-May has its own Indian demand peak, so March-April was not a clean control), the window-minus-rest difference is a pre-registered requirement in design, check and any holdout, and the exit flag sits on the bar before the next signal bar so every Monday-Thursday day trades.",
+    "markets": [
+      "XAUUSD"
+    ],
+    "timeframe": "H1",
+    "strategy_path": "strategies\\auto\\gold_autumn_physical_demand.py",
+    "params": {
+      "window": "sep_nov_baur",
+      "sl_atr": 2.0
+    },
+    "grid": {
+      "window": [
+        "sep_nov_baur",
+        "sep_nov",
+        "rest"
+      ],
+      "sl_atr": [
+        1.0,
+        2.0
+      ]
+    },
+    "stage_a": {
+      "market": "XAUUSD"
+    },
+    "pre_registered": {
+      "expected_design_t_min": 1.0,
+      "expected_avg_r": 0.03,
+      "min_trades_design_per_market": 250,
+      "kill_if": "(1) Design avg R for sep_nov_baur at sl_atr = 2.0 <= 0 or design t < 1. (2) Control: in design, avg R(sep_nov_baur) - avg R(rest) >= 0.02 at the same stop, otherwise kill regardless of sign (the drift would be gold's general trend, not seasonal demand). (3) Seasons, not days: at least 5 of the 8 design seasons (Sep + Nov R summed per year) must be positive. (4) Check: avg R at the chosen combination > 0 with at least 4 of 6 seasons positive, and avg R(window) - avg R(rest) > 0 in check. (5) If ever promoted, the holdout verdict must report the window-minus-rest difference and a holdout where the window does not beat the rest is a fail even if raw avg R > 0 (2024-2026 is a gold bull market, so a long-only raw pass proves little). Minimum design trades: 250 for sep_nov_baur. Honest expectations: design t 1.0-1.7 is accepted as below the pass bar; a pass needs design t >= 2, which this test reaches only if the effect is stronger than published. Even if real it is worth about 1 R a year; its value is a clean out-of-sample reading of a published anomaly either way."
+    },
+    "costs": {},
+    "notes": "All times UTC. Bars: H1 on XAUUSD. Bars are sparse; locate by timestamp.\n\nDAILY SIGNAL BAR: for each UTC date D, let E(D) be the last H1 bar whose close time is at or before 20:00 UTC on D and after 16:00 UTC on D. If none exists, no trade on D.\n\nWINDOW: window is a string parameter with three allowed values, by the UTC month of D: \"sep_nov_baur\" = D in September or November (the months Baur publishes; primary); \"sep_nov\" = D in September, October or November (the broader physical-demand season); \"rest\" = every other month (January to August and December; the pre-registered control). Raise on any other value. Weekday of D must be Monday to Thursday (a Friday entry would hold over the weekend; it is excluded so every trade is a 24-hour hold).\n\nENTRY: on bar E(D) inside the window: entry_long[E(D)] = True, entry_type 0 (market at the next bar's open), valid_bars 1. With the exit placed on the bar before the next signal bar, the position is flat when the next signal registers.\n\nSTOP: sl_dist[E(D)] = sl_atr * ATR20_prev with ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to E(D); no trade if NaN or <= 0. tp_dist = NaN.\n\nEXIT: let X = E(D_next), the signal bar of the next UTC date (any weekday, including Friday) that has a valid E. Set exit_long[X - 1] = True (the last bar before X), only if X - 1 > E(D); the executor then closes at the open of bar X, which ends at 20:00 UTC on D_next (about a 23-hour hold), so the position is flat when the next day's signal at X registers and every Monday-Thursday day in the window trades. Safety net: max_bars[E(D)] = 30. H1 bars are labelled by open time; a bar's close time is ts + 1h.\n\nLongs only, no other filters.",
+    "aux_markets": []
+  },
+  "stages": {
+    "leak": {
+      "ok": true,
+      "truncation": {
+        "ok": true,
+        "probes": [
+          {
+            "k": 42065,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 75717,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          }
+        ]
+      },
+      "perturbation": {
+        "ok": true,
+        "probes": [
+          {
+            "k": 42065,
+            "direction": 1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 42065,
+            "direction": -1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 75717,
+            "direction": 1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          },
+          {
+            "k": 75717,
+            "direction": -1.0,
+            "mismatches": 0,
+            "first_mismatch": -1,
+            "fields": ""
+          }
+        ]
+      },
+      "determinism": {
+        "ok": true,
+        "mismatches": 0,
+        "first_mismatch": -1,
+        "fields": ""
+      },
+      "n_entries": 481,
+      "aux_markets": []
+    },
+    "A": {
+      "market": "XAUUSD",
+      "grid": {
+        "window": [
+          "sep_nov_baur",
+          "sep_nov",
+          "rest"
+        ],
+        "sl_atr": [
+          1.0,
+          2.0
+        ]
+      },
+      "combos": 6,
+      "table": [
+        {
+          "window": "rest",
+          "sl_atr": "2.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 2160,
+          "avg_r": 0.0015202477342778473,
+          "t": 0.21400168357119806,
+          "total_r": 3.28373510604015,
+          "max_dd_r": 17.927266271277627,
+          "passes_bar": false,
+          "design_n": 1228,
+          "design_avg_r": 0.00042289834841710084,
+          "design_t": 0.04477201917581107,
+          "check_n": 932,
+          "check_avg_r": 0.0029661115173647517,
+          "check_t": 0.2750478671522608
+        },
+        {
+          "window": "rest",
+          "sl_atr": "1.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 2160,
+          "avg_r": 0.004068772239371503,
+          "t": 0.301164768064803,
+          "total_r": 8.788548037042446,
+          "max_dd_r": 35.85826847134362,
+          "passes_bar": false,
+          "design_n": 1228,
+          "design_avg_r": -0.0009833738573842646,
+          "design_t": -0.054532603938480965,
+          "check_n": 932,
+          "check_avg_r": 0.010725462590032538,
+          "check_t": 0.52572355341755
+        },
+        {
+          "window": "sep_nov_baur",
+          "sl_atr": "2.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 481,
+          "avg_r": -0.03272360486350514,
+          "t": -2.0987179100424904,
+          "total_r": -15.740053939345973,
+          "max_dd_r": 21.20590725142413,
+          "passes_bar": false,
+          "design_n": 275,
+          "design_avg_r": -0.04016770625521453,
+          "design_t": -1.941218267806854,
+          "check_n": 206,
+          "check_avg_r": -0.022786090869718334,
+          "check_t": -0.9591534861105216
+        },
+        {
+          "window": "sep_nov_baur",
+          "sl_atr": "1.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 481,
+          "avg_r": -0.05435822620519534,
+          "t": -1.869126962942909,
+          "total_r": -26.14630680469896,
+          "max_dd_r": 35.18382879381961,
+          "passes_bar": false,
+          "design_n": 275,
+          "design_avg_r": -0.07589752650788147,
+          "design_t": -1.9593821478107099,
+          "check_n": 206,
+          "check_avg_r": -0.025604305898211437,
+          "check_t": -0.5813517932769787
+        },
+        {
+          "window": "sep_nov",
+          "sl_atr": "1.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 728,
+          "avg_r": -0.030458998517122148,
+          "t": -1.295198872145701,
+          "total_r": -22.174150920464925,
+          "max_dd_r": 38.01096181028297,
+          "passes_bar": false,
+          "design_n": 416,
+          "design_avg_r": -0.06097964098320404,
+          "design_t": -1.9909606192799405,
+          "check_n": 312,
+          "check_avg_r": 0.010235191437653689,
+          "check_t": 0.27979564246943345
+        },
+        {
+          "window": "sep_nov",
+          "sl_atr": "2.0",
+          "sig_start_utc": "16:00",
+          "sig_end_utc": "20:00",
+          "bar_minutes": "60",
+          "max_hold_bars": "30",
+          "atr_n": "20",
+          "n": 728,
+          "avg_r": -0.020144904170066064,
+          "t": -1.612937239550754,
+          "total_r": -14.665490235808095,
+          "max_dd_r": 23.659490298409267,
+          "passes_bar": false,
+          "design_n": 416,
+          "design_avg_r": -0.0356151396854203,
+          "design_t": -2.162208844250647,
+          "check_n": 312,
+          "check_avg_r": 0.0004820765170729102,
+          "check_t": 0.025208293037724074
+        }
+      ],
+      "best": {
+        "window": "rest",
+        "sl_atr": "2.0",
+        "sig_start_utc": "16:00",
+        "sig_end_utc": "20:00",
+        "bar_minutes": "60",
+        "max_hold_bars": "30",
+        "atr_n": "20",
+        "n": 2160,
+        "avg_r": 0.0015202477342778473,
+        "t": 0.21400168357119806,
+        "total_r": 3.28373510604015,
+        "max_dd_r": 17.927266271277627,
+        "passes_bar": false,
+        "design_n": 1228,
+        "design_avg_r": 0.00042289834841710084,
+        "design_t": 0.04477201917581107,
+        "check_n": 932,
+        "check_avg_r": 0.0029661115173647517,
+        "check_t": 0.2750478671522608
+      }
+    }
+  },
+  "gates": {
+    "G0_no_leak": true,
+    "GA_stage_a_floor": false
+  },
+  "verdict": "kill:stage_a",
+  "failing": [
+    "GA_stage_a_floor"
+  ],
+  "seconds": 18.0
+}

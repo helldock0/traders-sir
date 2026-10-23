@@ -1,0 +1,26 @@
+{
+ "verdict": "approve",
+ "issues": [
+  {
+   "severity": "minor",
+   "where": "PARAMS \"bar_minutes\": 60 / close_ts = m.ts + bar_len",
+   "issue": "Bar length is a hard-coded parameter, not derived from m.tf. Correct for the registered H1 timeframe, but if the module were ever run on another timeframe E(D) would be selected by a wrong close time.",
+   "fix": "Optional: assert m.tf == 'H1' (or derive bar length from m.tf). No change needed for this run."
+  },
+  {
+   "severity": "minor",
+   "where": "s.max_bars[ei] = int(p[\"max_hold_bars\"])  (30)",
+   "issue": "When the next UTC date with a valid E is not the next weekday (for example a Thursday entry before a Friday with no 16:00-20:00 bars, or a data gap), the exit falls back to the 30-bar time stop, which can hold over a weekend. This is the pre-registered safety net and affects very few trades (Good Friday and Christmas fall in the 'rest' control only).",
+   "fix": "None required; the Director may note that a handful of 'rest' trades are weekend holds."
+  },
+  {
+   "severity": "minor",
+   "where": "_WINDOW_MONTHS labels",
+   "issue": "'sep_nov_baur' = {9, 11} (October excluded) and 'sep_nov' = {9, 10, 11}. These match the rules as written, but the labels are easy to misread in reports.",
+   "fix": "None; keep the labels as registered and spell out the months in the report."
+  }
+ ],
+ "lookahead_risk": "Low. E(D) is chosen only from timestamps (close time = open ts + 60 min in (16:00, 20:00] UTC on D), never from prices. The stop uses F.atr_prev (high-low range of the previous 20 NY-17:00 trading days, shifted by 1) mapped via daily.to_bars at E(D); the bar opening 19:00 UTC belongs to the trading day that started at the previous 17:00 NY, so the value is known before the bar. Exit flags at X-1 come from the calendar, not from future prices. The month and weekday filters use the date of E(D). Truncation and perturbation probes show 0 mismatches and the run is deterministic.",
+ "matches_rules": true,
+ "notes": "Checked against the rules: (1) E(D) is the last bar per UTC date whose close is after 16:00 and at or before 20:00, using the strict and non-strict bounds as written; dates come from the bar open ts (F.utc_dates), which is right because the window bars open 15:xx-19:00. (2) Month = datetime64[M] int % 12 + 1 is correct (1970-01 -> 1). Weekday uses F.weekday, 0=Mon, and wd <= 3 keeps Monday-Thursday. Unknown window raises ValueError. (3) Entry is long, market (Signals default entry_type 0, valid_bars 1), sl_dist = sl_atr * ATR20_prev, skipped when NaN or <= 0, tp NaN, max_bars 30. (4) The exit flag sits on X-1, where X = E of the next date with a valid E of any weekday or month, guarded by x-1 > ei. In the executor exit_long[i-1] closes at bar i's open (after the gap-through-stop check), so the position is flat at X's open and the new entry signal at X's close is accepted; consecutive Mon-Thu days all trade (about 23 H1 bars per hold because of gold's daily break, well under the 30-bar net). The exit is also set when the next day is outside the window or is a Friday, as the rules require. The entry count of 481 on the default (Sep and Nov, Mon-Thu, about 35 a year over about 14 years) matches expectations. GRID keys window and sl_atr are both read from p, and defaults are present. Approve for stage A."
+}

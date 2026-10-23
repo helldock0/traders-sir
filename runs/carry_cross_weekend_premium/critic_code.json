@@ -1,0 +1,20 @@
+{
+ "verdict": "approve",
+ "issues": [
+  {
+   "severity": "minor",
+   "where": "if xi < m.n and xi - 1 > sig and m.ts[xi] - x_target <= max_delay:",
+   "issue": "Whether the exit flag is placed on bar X-1 depends on the timestamp of bar X, the next bar. This is the same next-bar-timestamp convention the oracle modules use for entries, and the truncation test tolerates it. The behaviour it creates is a little unrealistic: when the exit bar is more than 60 minutes late, a live trader with a timed exit would close at the first tick after the target, but the module holds the trade until the 24-bar net. On AUDJPY design H1 this happens in 0 or 1 of 412 trades per combination, so the effect is negligible. The amended pre-registration specifies exactly this behaviour.",
+   "fix": "No change needed now; it follows the amended rule. If the Director wants the live behaviour, drop the delay test on the exit (flag X-1 whenever X < m.n and X-1 > S). That is safe because the fill is at the open of X regardless."
+  },
+  {
+   "severity": "minor",
+   "where": "split boundaries (runner, not the module)",
+   "issue": "The last Friday trade before a split cut (for example 2017-12-29 on a 2018-01-01 cut) has its Monday exit past the horizon, so it closes with reason END at the last available bar. In a design-only sanity run this was 1 trade in 412.",
+   "fix": "The runner should either drop END-reason trades or make sure the split filter assigns them by entry date with the full price path. It is not a module change."
+  }
+ ],
+ "lookahead_risk": "Low. Entry decisions use only the UTC calendar, the timestamp of the entry bar (the oracle convention: 'is the market open at entry_utc'), and atr_prev, which is shifted one trading day and known at the start of the day. For every grid entry time (16:00 and 20:00 UTC on Friday or Monday), the entry bar ei and the signal bar S fall in the same NY-17:00 trading day, so atr[ei] equals atr[S]. The look-ahead the Builder found (skipping an entry when the future exit bar is missing) has been removed: the exit-bar check now gates only exit_long[X-1] and never the entry. All truncation, perturbation and determinism probes pass with 0 mismatches over 723 entries. No centred windows, no full-sample statistics, no reads of bar i+1 prices.",
+ "matches_rules": true,
+ "notes": "Checked against the amended rules in hypothesis.json. The entry_day mapping is correct: fri gives weekday 4 with D_exit = D+3 (Monday), mon gives weekday 0 with D_exit = D+1 (Tuesday). For the entry, ei = first_bar_at_or_after(D, entry_utc), the delay must be <= 60 min and ei >= 1, the signal bar is S = ei-1, and the order is a long market entry (entry_type 0, valid_bars 1, one per date). Stop is sl_atr * atr_prev(20), skipped when NaN or <= 0. tp_dist is NaN by default. max_bars[S] = 24 is read from p['max_hold_bars']. The exit flag sits on X-1, so the position closes at the open of the first bar opening at or after exit_utc. For a Monday 00:00 target, X-1 is the Sunday 23:00 bar, which works as intended. Every GRID key (entry_day, entry_utc, exit_utc, sl_atr) is read from p, and PARAMS holds defaults for these plus max_delay_min and max_hold_bars. The grid is the pre-registered 16 combinations. I ran a read-only sanity check on AUDJPY H1 for 2010-2017 (design years only) across all 16 combinations. Each gives 412 entries, all on the right weekday and at the right UTC hour. Exits land on Monday 00:00 or 07:00 for the fri arm and Tuesday 00:00 or 07:00 for the mon arm in 404-412 of 412 trades; the rest are stop-outs (including Sunday-open gaps through the stop, as the rules intend), one END per fri combination at the 2018 cut, and one TIME exit per mon/07:00 combination caused by a data gap. Maximum hold is 5-16 bars, except that the 24-bar net fired once. The 24-bar net never reaches the Wednesday 17:00 NY triple rollover, apart from a pathological data gap. For information only, not a verdict on the edge: gross R before commission was slightly negative in every design combination on AUDJPY (-0.001 to -0.026). That is a Stage A matter. The kill rule (1) will decide it."
+}

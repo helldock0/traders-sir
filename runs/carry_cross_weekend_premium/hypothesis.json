@@ -1,0 +1,55 @@
+{
+ "slug": "carry_cross_weekend_premium",
+ "title": "Weekend risk premium in carry crosses: long AUDJPY (NZDJPY, AUDUSD, NZDUSD) from the Friday New York afternoon to the Monday Tokyo or London open, with a weekday-overnight control",
+ "family": "weekend_risk_premium_carry",
+ "rationale": "Leveraged carry positions (Japanese retail margin books, CTAs, macro funds) cannot be adjusted for about 48 hours over the weekend, and weekend gap risk in the yen crosses is the largest in FX (the Monday-gap column of the market facts shows AUDJPY 1.2, NZDJPY 2.0, GBPJPY 3.9 pips median, with the tails far larger). Risk managers therefore cut high-yield exposure into the Friday New York afternoon and re-establish it on Monday in Tokyo and London; dealers widen and run flat inventory over the weekend and buy back Monday. The holder who carries the risk over the weekend is paid, if at all, by price alone: spot settles T+2, so the triple rollover falls on Wednesday (in Dukascopy prices and in this engine's cost model), and both the Friday arm and the Monday control cross exactly one single rollover, so net carry is about zero minus the 1% markup. The premium, if it exists, is the price effect of Friday selling and Monday buying. This is the FX analogue of the weekend and overnight risk premia documented in equities (Lou, Polk and Skouras 2019) and of the 'weekend effect' literature in currencies (Yamori and Kurihara 2004), which the flow atlas could not see: its windows were intraday (30 minutes to 8 hours) on single weekdays, so a Friday-to-Monday hold was never measured, and no prior report in the index holds a position over a weekend by design (the gap tests measured Monday gap fills, not the weekend return). Costs are not negligible at the weekend edges: spreads at the Friday 20:00 UTC entry and around the Monday 00:00 UTC exit are far wider than the all-hours median, roughly 3-4 pips round trip including commission on AUDJPY, which is 0.015-0.03 R against a 1.5-3 x ATR20 stop of 120-240 pips, the same order as the premium being sought; every arm therefore reports gross and net R and its mean entry and exit spread. Sample: every weekend, so about 410 design trades per market, which is why this family was chosen after cycles 3 and 4 died at the underpowered single-market gate. A weekday-overnight control is built into the grid: the same hold from Monday 20:00 UTC to Tuesday morning measures the overnight carry drift without the weekend, so the weekend premium must beat it. EURJPY is included as a low-carry comparison: if EURJPY shows the same premium the effect is a JPY-risk premium rather than carry, which is still tradeable but changes the interpretation. Critic revisions accepted before any run: carry claim removed (triple rollover is Wednesday), cost estimate from the actual weekend-edge spreads, exit at the open of the first bar opening at or after exit_utc, 2020 rule additive to the hard gate, paired fri-minus-mon t and 3-of-4 market rule, safety-net hold cut to 24 bars.",
+ "markets": [
+  "AUDJPY",
+  "NZDJPY",
+  "AUDUSD",
+  "NZDUSD",
+  "EURJPY"
+ ],
+ "aux_markets": [],
+ "timeframe": "H1",
+ "rules": "All times UTC. Bars: H1, labelled by open time; a bar's close time is ts + 1h. Bars are sparse; locate by timestamp.\n\nENTRY DAY: entry_day is a string parameter: \"fri\" (the hypothesis, F.weekday == 4) or \"mon\" (the weekday-overnight control, F.weekday == 0). For each UTC date D whose weekday equals entry_day, let ei = F.first_bar_at_or_after(m, [D], entry_hh, entry_mm); require ei >= 1 and m.ts[ei] no more than 60 minutes after the target time D + entry_utc, otherwise no trade on D. The signal bar is S = ei - 1 (the bar that closes at the entry time), so the market fill lands at the open of bar ei, i.e. at entry_utc (oracle pattern, strategies/oracle/m3_usd_bid.py).\n\nENTRY: entry_long[S] = True, entry_type 0 (market at the next bar's open), valid_bars 1. One trade per entry date. Longs only (long the high-yield currency: AUDJPY, NZDJPY, AUDUSD, NZDUSD, EURJPY are all quoted so that a long is long the first currency, which is the higher-yielding side in 2010-2023 for AUD and NZD; EURJPY is the low-carry comparison).\n\nSTOP: sl_dist[S] = sl_atr * ATR20_prev, ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to S; no trade if NaN or <= 0. tp_dist = NaN. A gap through the stop at the Sunday/Monday open exits at that open (executor rule).\n\nEXIT: let D_exit = D + 3 calendar days when entry_day = \"fri\" (the Monday) and D + 1 calendar day when entry_day = \"mon\" (the Tuesday). Let X = F.first_bar_at_or_after(m, [D_exit], exit_hh, exit_mm), the first H1 bar whose OPEN time is at or after exit_utc on D_exit (a Monday 00:00 target may be preceded by Sunday-evening UTC bars; first_bar_at_or_after on the Monday date handles that). Set the exit flag only if X < m.n, X - 1 > S and m.ts[X] is no more than 60 minutes after the target time; if the exit bar is missing or late the trade is NOT skipped (skipping an entry because of a future exit bar is a look-ahead and fails the truncation test) and the max_bars safety net closes it instead. Set exit_long[X - 1] = True, so the position closes at the open of the bar starting at exit_utc. Safety net: max_bars[S] = 24 for both arms (a longer net could let a missed exit run to the Wednesday triple rollover and mix in the carry the control is meant to exclude).\n\nNo other filters.\n\nREPORTING (stage C): for every arm report gross R (before spread and commission) alongside net R, the mean entry and exit spread in pips, the paired fri-minus-mon difference and its t per market, and the individual weekend trades of 2015-08 and 2020-03 (and 2024-08 only at promotion).",
+ "params": {
+  "entry_day": "fri",
+  "entry_utc": "20:00",
+  "exit_utc": "07:00",
+  "sl_atr": 1.5
+ },
+ "grid": {
+  "entry_day": [
+   "fri",
+   "mon"
+  ],
+  "entry_utc": [
+   "16:00",
+   "20:00"
+  ],
+  "exit_utc": [
+   "00:00",
+   "07:00"
+  ],
+  "sl_atr": [
+   1.5,
+   3.0
+  ]
+ },
+ "stage_a_market": "AUDJPY",
+ "pre_registered": {
+  "expected_design_t_min": 1.5,
+  "expected_avg_r": 0.02,
+  "min_trades_design_per_market": 300,
+  "kill_if": "(1) Stage A best design avg R on AUDJPY at entry_day = fri <= 0 or design t < 1. (2) Control: at the same entry_utc, exit_utc and sl_atr, avg R(fri) - avg R(mon) >= 0.03 R in design, the paired fri-minus-mon t is reported per market, and the difference must be positive on at least 3 of the 4 AUD/NZD markets at the chosen combination (one market cannot carry it); if the weekday-overnight control earns as much as the weekend hold, the result is overnight drift and the hypothesis dies regardless of sign. (3) Cross-market: at the chosen combination at least three of AUDJPY, NZDJPY, AUDUSD, NZDUSD positive in design. (4) Regime: the hard gate (check avg R > 0 over all check years) stays; in addition the check period must be positive with 2020 removed, and at least half of the design years positive. (5) Costs: both gross and net R are reported for every arm with the mean entry and exit spreads, because the weekend-edge spread (about 3-4 pips round trip including commission, 0.015-0.03 R) is the same order as the premium; the 1.5x cost gate is a real threat and is accepted as such. (6) Interpretation, not a kill: if EURJPY is as good as the AUD/NZD crosses the premium is a JPY-risk premium, not carry. Honest expectations: both arms cross exactly one single rollover (triple is Wednesday), so this is a price-only premium; the expected design avg R is at least +0.02 R net at sl_atr 1.5, 3-7 pips of price premium per weekend; with about 410 design trades and sd about 0.5 R, design t is 0.8-2.0, adequately powered for the first time in three cycles, but the effect may be absent."
+ },
+ "similar_prior": [
+  "prior_fx_carry",
+  "prior_flow_atlas",
+  "prior_nasdaq_lead_lag",
+  "prior_eq_overnight_drift"
+ ],
+ "why_different": "Carry work in the index rebalanced monthly with trend and vol switches and holds positions through every day; the weekend premium is a two-day-per-week risk premium with the weekday-overnight control subtracted, so it is not carry drift. The atlas scanned single-weekday intraday windows of at most 8 hours and never held across a weekend; the Monday-gap tests (gap_cnyfix, edge_hunt) measured whether Monday gaps fill, not the Friday-to-Monday return. Equity overnight drift (eq_overnight_drift) was on US index CFDs at the European open. No prior test holds FX over the weekend by design.",
+ "parent_slug": null
+}

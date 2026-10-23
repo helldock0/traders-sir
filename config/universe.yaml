@@ -1,0 +1,26 @@
+# Research universe and time splits.
+
+symbols:
+  fx_majors: [EURUSD, GBPUSD, USDJPY, USDCHF, AUDUSD, USDCAD, NZDUSD]
+  fx_minors: [EURGBP, EURJPY, EURCHF, EURAUD, EURCAD, EURNZD, GBPJPY, GBPCHF, GBPAUD, GBPCAD, GBPNZD,
+              AUDJPY, AUDCHF, AUDCAD, AUDNZD, CADJPY, CADCHF, CHFJPY, NZDJPY, NZDCHF, NZDCAD]
+  metals: [XAUUSD, XAGUSD]
+  indices: [USA500IDXUSD, USATECHIDXUSD, USA30IDXUSD, DEUIDXEUR, GBRIDXGBP, JPNIDXJPY]
+
+timeframes: [M1, M3, M5, M15, M30, H1, H2, H3, H4, H8, D1, W1]
+
+# Daily/weekly bars are anchored to the New York 17:00 close (MT5 convention). Intraday bars to UTC clock.
+daily_anchor: ny_close
+
+# Time splits, kept identical to the prior alpha hunt in gj-strat so old and new results are comparable.
+# The holdout has already been looked at by 171 earlier tests; the research state tracks how often it is touched.
+splits:
+  design:  {start: 2010-01-01, end: 2017-12-31}
+  check:   {start: 2018-01-01, end: 2023-12-31}
+  holdout: {start: 2024-01-01, end: 2026-12-31}
+
+# Known data caveats (from gj-strat CHARTER.md and our quality report)
+caveats:
+  - Index CFDs start 2011-09 (US500, US100, UK100, JP225) or 2013-09 (US30, GER40); patchy before 2014; Asian hours missing 2015-2017.
+  - Dukascopy spreads are raw ECN spreads; prop-firm broker spreads are wider. Cost model must be calibrated per firm.
+  - Legacy bid-only rows (src = 1) have no ask side; the engine fills ask from the hourly spread model.

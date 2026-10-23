@@ -1,0 +1,83 @@
+{
+ "static": {
+  "ok": true,
+  "issues": []
+ },
+ "import": {
+  "ok": true,
+  "error": null,
+  "path": "D:\\Traders sir\\strategies\\auto\\index_earnings_season_premium.py"
+ },
+ "dynamic": {
+  "ok": true,
+  "issues": [],
+  "entries": 217,
+  "leak": {
+   "ok": true,
+   "truncation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 29347,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 52824,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "perturbation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 29347,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 29347,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 52824,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 52824,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "determinism": {
+    "ok": true,
+    "mismatches": 0,
+    "first_mismatch": -1,
+    "fields": ""
+   },
+   "ext_release": {
+    "ok": true,
+    "probes": []
+   },
+   "n_entries": 217,
+   "aux_markets": [],
+   "ext_series": []
+  }
+ },
+ "ok": true
+}

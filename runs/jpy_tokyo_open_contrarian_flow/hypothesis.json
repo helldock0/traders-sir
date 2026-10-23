@@ -1,0 +1,55 @@
+{
+ "slug": "jpy_tokyo_open_contrarian_flow",
+ "title": "Tokyo-open contrarian flow: fade the New York session move in USDJPY and AUDJPY at 09:00 JST",
+ "family": "liquidity_provision_tokyo_open",
+ "rationale": "Two large yen-side participant groups trade against the overnight move when Tokyo opens. Japanese retail margin traders (several trillion yen of monthly turnover, documented by the BoJ and the Tokyo Financial Exchange as systematically contrarian: they add to long USDJPY and AUDJPY positions after falls and take profit after rises) and Japanese importers and institutions who buy dollars more readily when the New York session has made them cheaper. Both groups are absent during New York hours, when macro accounts and CTAs move the price, and both arrive at 09:00 JST. The prediction is a partial reversal of the New York session move in the first one to two hours of Tokyo, strongest for falls (importer plus retail buying) and larger after larger moves. The other side is the New York accounts that pushed the price and the dealers who carried the inventory overnight. Costs: USDJPY 0.6 pips and AUDJPY 0.9 pips spread, about 1.7 to 2.0 pips all-in, against a 2-hour sigma of roughly 12-18 pips and stops of 0.25-0.5 ATR20 (15-40 pips). Sample: a 1.25-sigma threshold selects about a fifth of weekdays, roughly 400 design trades per market. The 'both' arm tests whether the flow is symmetric contrarian liquidity provision; the primary arm is long-only.",
+ "markets": [
+  "USDJPY",
+  "AUDJPY"
+ ],
+ "timeframe": "M5",
+ "rules": "All times UTC. Bars: M5. Markets USDJPY (primary) and AUDJPY, same rules.\nREFERENCE MOVE. For every UTC calendar date d that is a Tuesday, Wednesday, Thursday or Friday, the reference session is the New York session of the previous calendar date d-1 (always a weekday Monday-Thursday): P13 = bid close of the last bar strictly before ny_start ('13:00') on d-1 and P21 = bid close of the last bar strictly before ny_end ('21:00') on d-1 (use F.first_bar_at_or_after(m, d-1, hh, mm) and take the bar before it). Skip the day if either bar is more than 15 minutes before its target time or does not exist. M(d) = ln(P21 / P13). Mondays are never traded (the weekend gap sits between Friday's New York session and Monday's Tokyo open).\nVOLATILITY SCALE. sigma(d) = sample standard deviation (ddof 1) of the previous vol_window (20) available values of M, i.e. the M values of the 20 most recent earlier reference days, not including M(d). Skip days that have fewer than 20 earlier values. Compute this with a Python loop over days or a rolling window on the per-day array; never with information from d or later.\nSIGNAL. Trade only if |M(d)| >= theta * sigma(d). Direction is contrarian to the New York move: M(d) < 0 (the pair fell in New York) -> LONG at the Tokyo open; M(d) > 0 -> SHORT, but shorts are taken only when side == 'both' (side == 'long_only' takes the long trades only). M(d) == 0 -> no trade.\nENTRY. ei = F.first_bar_at_or_after(m, d, 0, 0) for entry_utc '00:00' (09:00 JST, Tokyo open). Skip if ei >= m.n or m.ts[ei] is more than max_delay_min (10) minutes after the target. Signal the market order on bar ei-1 (entry_long or entry_short) so it fills at the open of bar ei (ask for longs, bid for shorts).\nEXIT. xi = F.first_bar_at_or_after(m, d, hh, mm) for exit_utc in {'00:55', '02:00'}. Skip if xi >= m.n, xi <= ei or m.ts[xi] is more than max_delay_min minutes after the target. Set exit_long / exit_short on bar xi-1 so the position closes at the open of bar xi. No take-profit, one trade per date, no re-entry.\nSTOP. sl_dist = sl_atr * ATR20 where ATR20 = F.atr_prev(F.daily_bars(m), 20) broadcast to bars (New York 17:00 daily bars, known before the trading day that contains bar ei). Value at bar ei; skip if not finite or <= 0; write it on the signal bar ei-1.\nPARAMETERS. theta in {0.75, 1.25}; exit_utc in {00:55, 02:00}; sl_atr in {0.25, 0.5}; side in {long_only, both}; ny_start = 13:00, ny_end = 21:00, entry_utc = 00:00, vol_window = 20, max_delay_min = 10. Read every tunable from p.",
+ "params": {
+  "theta": 0.75,
+  "exit_utc": "00:55",
+  "sl_atr": 0.25,
+  "side": "long_only",
+  "ny_start": "13:00",
+  "ny_end": "21:00",
+  "entry_utc": "00:00",
+  "vol_window": 20,
+  "max_delay_min": 10
+ },
+ "grid": {
+  "theta": [
+   0.75,
+   1.25
+  ],
+  "exit_utc": [
+   "00:55",
+   "02:00"
+  ],
+  "sl_atr": [
+   0.25,
+   0.5
+  ],
+  "side": [
+   "long_only",
+   "both"
+  ]
+ },
+ "stage_a_market": "USDJPY",
+ "pre_registered": {
+  "expected_design_t_min": 1.5,
+  "expected_avg_r": 0.06,
+  "min_trades_design_per_market": 200,
+  "kill_if": "Stage A on USDJPY: no combination with at least 200 design trades has design avg R > 0 and t >= 1. Also scrap if the long-only arm is <= 0 while the 'both' arm is positive (that would be a generic intraday reversal, a family that has already died, not the importer-plus-retail flow claimed here). A result that exists only at exit 02:00 and not at 00:55 is allowed but must be noted as a slower flow than claimed."
+ },
+ "similar_prior": [
+  "prior_fx_session_rev",
+  "prior_box_breakouts",
+  "prior_nasdaq_lead_lag"
+ ],
+ "why_different": "The session-reversal tests faded the Asian-session extreme currency into London and New York, where no specific contrarian participant exists, and found nothing; the box tests traded breakouts of the pre-Tokyo range; the lead-lag tests used Nasdaq and Nikkei moves to predict USDJPY. This hypothesis fades the New York session move of the pair itself at the Tokyo open, a time and place with a named, documented contrarian participant (Japanese retail margin traders and importers), restricted to the two yen pairs those participants dominate, over a one-to-two-hour horizon.",
+ "parent_slug": null
+}

@@ -1,0 +1,78 @@
+{
+ "static": {
+  "ok": true,
+  "issues": []
+ },
+ "import": {
+  "ok": true,
+  "error": null,
+  "path": "D:\\Traders sir\\strategies\\auto\\carry_cross_weekend_premium.py"
+ },
+ "dynamic": {
+  "ok": true,
+  "issues": [],
+  "entries": 723,
+  "leak": {
+   "ok": true,
+   "truncation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43669,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "perturbation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 43669,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 43669,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 78605,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "determinism": {
+    "ok": true,
+    "mismatches": 0,
+    "first_mismatch": -1,
+    "fields": ""
+   },
+   "n_entries": 723,
+   "aux_markets": []
+  }
+ },
+ "ok": true
+}

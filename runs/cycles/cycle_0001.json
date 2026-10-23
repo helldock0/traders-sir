@@ -1,0 +1,160 @@
+{
+ "cycle": 1,
+ "finished": "2026-10-12T06:32:19+00:00",
+ "direction_note": "Cycle 1 (first live Claude Code cycle). Gold Asian-session bias rejected by the Critic as a duplicate of the flow atlas. London trend-day continuation into New York built, approved in code review, and scrapped by the pipeline: check avg R -0.002 (n 666), walk-forward OOS +0.001 (n 1387), design positive only at the k=0.8 corner with under 150 trades per market; GBPJPY the only mildly positive market and negative at 2x costs. Lesson: London-session trend days do not carry into New York on the majors after costs. Next: risk-off transmission from US100 cash session into AUDJPY/NZDJPY Asian session; quarter-end variant of the month-end USD bid.",
+ "director_events": [],
+ "director": {
+  "judgments": [],
+  "hypotheses": [
+   {
+    "slug": "london_trend_day_ny_continuation",
+    "title": "Trend-day continuation: London open-drive carries into the New York session",
+    "family": "intraday_continuation_trend_day",
+    "rationale": "On most days the London session is two-sided and its extremes revert, which is why session-reversal and box-breakout ideas died. A minority of days are trend days: a macro or CTA flow arrives at the London open and price runs one way with shallow pullbacks, closing the London morning near its extreme. Those flows are executed over the whole day by participants who must finish (funds rebalancing, systematic trend followers adding on strength, corporates with deadlines), and the New York session adds the same-direction US accounts plus the stops of early faders. The other side is counter-trend liquidity providers who are forced to cover into the New York open. The signature (large London range and a close at the extreme) is observable at 12:00 UTC, before the US participants arrive; the continuation should show up as positive drift from 12:00 to 16:00 UTC on those days only. Costs are lowest at 12 to 15 UTC on the majors (market facts), and the stop is sized to the day's own range, so R is meaningful rather than a fixed pip number.",
+    "markets": [
+     "EURUSD",
+     "GBPUSD",
+     "USDJPY",
+     "AUDUSD",
+     "USDCAD",
+     "GBPJPY"
+    ],
+    "timeframe": "M5",
+    "rules": "All times UTC. For each calendar date d (Monday to Friday): the London window is all bars with 07:00 <= ts < 12:00 on d. Let O = bid open of the first bar at or after 07:00 (skip the day if that bar is more than 15 minutes after 07:00), H = highest bid high in the window, L = lowest bid low in the window, C = bid close of the last bar before 12:00 (skip the day if that bar is more than 15 minutes before 12:00), R = H - L. ATR = previous-20-trading-day average daily range (F.atr_prev on NY-close daily bars) known at the start of the trading day that contains 12:00 UTC on d; skip the day if ATR is not available. Trend-day signature: R >= k * ATR. Direction: long if (C - L) / R >= 1 - q; short if (C - L) / R <= q; otherwise no trade. Entry: market order signalled on that last bar before 12:00, so it fills at the open of the first bar at or after 12:00 (ask for longs, bid for shorts). Stop: m * R from the fill. No take-profit. Exit: close the position at the open of the first bar at or after exit_utc (default 16:00) by setting the exit flag on the last bar before exit_utc; the stop stays live until then. One trade per day at most, no re-entry. Parameters: k (range threshold in ATR units), q (close-location fraction), m (stop in units of R), window_start = 07:00, window_end = 12:00, exit_utc = 16:00, max_delay_min = 15.",
+    "params": {
+     "k": 0.65,
+     "q": 0.25,
+     "m": 0.5,
+     "window_start": "07:00",
+     "window_end": "12:00",
+     "exit_utc": "16:00",
+     "max_delay_min": 15
+    },
+    "grid": {
+     "k": [
+      0.5,
+      0.65,
+      0.8
+     ],
+     "q": [
+      0.15,
+      0.25
+     ],
+     "m": [
+      0.5,
+      0.75
+     ]
+    },
+    "stage_a_market": "EURUSD",
+    "pre_registered": {
+     "expected_design_t_min": 2.0,
+     "expected_avg_r": 0.05,
+     "min_trades_design_per_market": 150,
+     "kill_if": "Stage A on EURUSD: best design avg R <= 0 or design t < 1. Also treat as dead if the effect exists only when m = 0.75 and k = 0.5 (the loosest corner), because that is the configuration closest to a plain afternoon-momentum bet."
+    },
+    "similar_prior": [
+     "prior_fx_session_rev",
+     "prior_box_breakouts",
+     "prior_trend_follow"
+    ],
+    "why_different": "Session-reversal tests traded the Asian extreme into London and New York and found neither reversal nor momentum on average days; box breakouts entered on the first break of a quiet range. This hypothesis trades only days that already show a one-sided London session (large range plus close at the extreme) and bets on the New York continuation of that established flow, with the stop scaled to the day's range. It is a conditional, intraday, same-day mechanism rather than a daily or multi-day trend rule.",
+    "parent_slug": null
+   },
+   {
+    "slug": "gold_asia_session_physical_bid",
+    "title": "Gold rises during Asian hours: physical demand executes in Asia, paper selling in London and New York",
+    "family": "intraday_seasonality_metal",
+    "rationale": "Physical gold demand from China and India (jewellers, bullion banks pricing off the Shanghai Gold Exchange, retail) is executed during Asian trading hours, while the bulk of paper selling (ETF outflows, COMEX futures, London OTC) happens in London and New York hours. The two groups trade at different times of day, so the price can carry a persistent intraday pattern: a positive drift from the Asian open to the London open, and weaker or negative drift later, which is the documented bias around the London fixes. The other side is the Western paper seller who is simply not active at 01:00 UTC. The gold-fix fade and gold box breakouts in the scrap index are point-in-time trades at the fix or on a range break; this is a session-long directional bias. Gold is expensive to trade per hour of range in Asia (cost ratio about 0.1), so the stop is scaled to the daily ATR to keep cost per R near 5 percent.",
+    "markets": [
+     "XAUUSD"
+    ],
+    "timeframe": "M5",
+    "rules": "All times UTC. For each calendar date d: entry target time = d at entry_utc (23:00 or 00:00). The exit target time is exit_utc (07:00 or 08:00) on the next calendar day when entry_utc >= 12:00, otherwise on d. Signal a long market entry on the last bar before the entry target time, provided the first bar at or after the entry target is no more than max_delay_min (15) minutes after it (this skips weekends and holidays, when the next available bar is far away). The order fills at the open of the first bar at or after the entry target (ask). ATR = previous-20-trading-day average daily range (F.atr_prev on NY-close daily bars) known at the start of the trading day containing the entry bar; skip if not available. Stop: s * ATR below the fill. No take-profit. Exit: set the exit flag on the last bar before the exit target so the position closes at the open of the first bar at or after it; skip the day if that first exit bar is more than 15 minutes after the exit target. Long only, one position at a time. Parameters: entry_utc, exit_utc, s (stop in ATR units), max_delay_min = 15.",
+    "params": {
+     "entry_utc": "23:00",
+     "exit_utc": "07:00",
+     "s": 0.3,
+     "max_delay_min": 15
+    },
+    "grid": {
+     "entry_utc": [
+      "23:00",
+      "00:00"
+     ],
+     "exit_utc": [
+      "07:00",
+      "08:00"
+     ],
+     "s": [
+      0.3,
+      0.5
+     ]
+    },
+    "stage_a_market": "XAUUSD",
+    "pre_registered": {
+     "expected_design_t_min": 2.0,
+     "expected_avg_r": 0.04,
+     "min_trades_design_per_market": 300,
+     "kill_if": "Stage A: best design avg R <= 0 or design t < 1. Treat as dead if the check-period average is negative even when the design period passes, since the physical-demand structure must be persistent to be worth trading."
+    },
+    "similar_prior": [
+     "prior_fix_fades",
+     "prior_box_breakouts"
+    ],
+    "why_different": "Prior gold tests faded or followed the fix at a point in time or traded breakouts of a time box. This is a session-long long-only bias explained by who is active when (physical buyers in Asian hours, paper sellers later), not by a fix-time flow or a range break.",
+    "parent_slug": null
+   }
+  ],
+  "direction_note": "Cycle 1 is the first live run of the Claude Code loop. Two mechanisms absent from the scrap index: (1) same-day continuation of London trend days into New York on the majors, a conditional intraday flow idea rather than a breakout or reversal; (2) a gold Asian-session long bias from the hour-of-day separation of physical and paper flows. Both are cheap to test and executable by hand on a prop account. If the loop runs cleanly, cycle 2 should test risk-off transmission from the US100 cash session into AUDJPY and NZDJPY during the following Asian session (Japanese retail carry positions reacting to overnight US moves), and the quarter-end variant of the month-end USD bid."
+ },
+ "critic_review": {
+  "reviews": [
+   {
+    "slug": "london_trend_day_ny_continuation",
+    "verdict": "revise",
+    "reasons": [
+     "Not a duplicate and not indicator soup: no scrap entry conditions on the London session's own path (a large 07:00-12:00 UTC range closing at its extreme) and trades the same pair into New York. The nearest relatives are prior_fx_session_rev (overnight cross-sectional extremes traded into London/NY) and the trade-research cssm line (overnight momentum gating 11:00-13:30 UTC range breakouts held to 16:00 UTC, about -0.05 R). The mechanism (order-split institutional flow, trend followers adding, early faders stopped out) is economic, and the signature is known from closed bars at 12:00 UTC.",
+     "Prior evidence is against it and why_different overstates the gap: the fx_session_rev momentum variants were also run on large-move days only (filter F: overnight dispersion >= 1.5 x its 60-day median) and still lost in design after costs (V6 -0.03 R, V8 -0.05 R); FX trend following was flat even before costs; the market facts show negative M5 and H1 autocorrelation on all six pairs. A London trend-day trigger is different enough to deserve one honest test, but the expected value is modest.",
+     "Costs are material but not dominant: a round trip costs about 1.3-2 pips on EURUSD and 2-3.5 pips on AUDUSD, USDCAD and GBPJPY at 12-16 UTC ($7/lot, 0.2 pip slippage on entry and exit, spread) against stops of roughly 25-55 pips (m x R), i.e. about 0.03-0.08 R per trade (less at m = 0.75). The pre-registered +0.05 R net therefore needs about 0.08-0.13 R gross, a 3-5 pip drift in the trade direction over four hours on EURUSD.",
+     "Pre-registered expectations are internally inconsistent. Outcome-free trigger counts (design 2010-2017, computed by the Critic from bars up to 12:00 UTC; no returns looked at) at the default cell k=0.65, q=0.25: EURUSD 334, GBPUSD 435, USDJPY 177, AUDUSD 177, USDCAD 163, GBPJPY 382. With sigma(R) about 0.8-1.0 for a 4-hour hold with no target, +0.05 R per trade gives a design t of about 1 per market, not >= 2; t >= 2 at +0.05 R needs roughly 1,000-1,300 trades, which only the six-market pool (about 1,670 trades) provides.",
+     "The 150-trade minimum fails for part of the grid, because one k in ATR units selects very different shares of days per pair (median London range / ATR20: USDJPY 0.38, USDCAD 0.41, AUDUSD 0.42, EURUSD 0.47, GBPJPY 0.51, GBPUSD 0.54). Design trades: k=0.8 gives 45-81 on USDJPY, AUDUSD and USDCAD; k=0.65 with q=0.15 gives 104-115 on those three; k=0.8 with q=0.15 gives 107 on EURUSD and 128 on GBPJPY. The pipeline will still choose any cell with >= 30 design trades as a market's best.",
+     "The kill rule judges the best of 12 cells, which only repeats the automatic stage-A floor, instead of the surface (charter rule 7). The loosest-corner clause is the right idea but needs a surface test beside it.",
+     "Overfit risk is medium: 72 cells over six correlated, USD-heavy markets with best-by-t selection per market; trend days cluster on central-bank and data days, so a few events can carry a 100-trade cell; the 12:00-16:00 UTC hold contains US data, the US equity open and the 4pm London fix (inside the hold in summer, at the exit in winter), and fixed UTC times shift the window against both local clocks by an hour between seasons; unconditional clock drifts sit in or beside this window (the atlas's EUR weakness around 11:00-13:00 London, the documented USD bid into the 4pm fix), which a one-sided result could pick up.",
+     "Signature fidelity is acceptable: the London open O is computed but unused, yet 76-89% of EURUSD signals (74-98% on GBPUSD and USDJPY; outcome-free count) already have an open-to-close body of at least 0.5 R in the trade direction, so V-shaped reversal days are a minor share and no rule change is needed."
+    ],
+    "revisions": "Pre-registration only: the Builder implements the rules exactly as written (no change to rules, PARAMS or GRID). The Director applies these at judgment. (1) Expectations: expected_design_t_min 2.0 applies to the six-market pool at the chosen cells; per market, +0.05 R implies a design t of about 1, so a lone market far above t 2 on a small cell is suspect rather than confirming. (2) Eligibility: a cell with fewer than 150 design trades on a market is reported but cannot be that market's chosen cell; if no eligible EURUSD cell clears the stage-A floor, kill. (3) Surface kill at stage A (EURUSD, eligible cells): dead if fewer than half have design avg R > 0, or if the eligible k = 0.8 cells (mean over q and m) are <= 0 while the k = 0.5 cells are > 0, since the mechanism says the strongest signatures continue most; this is in addition to the loosest-corner clause. (4) Symmetry: in the chosen cells, USD-buy and USD-sell trades (GBPJPY: long and short) must each have design avg R > 0 pooled across markets; a result carried by one side is a clock drift, not trend-day continuation. (5) Read the pooled check statistics as roughly three independent markets, not six, because London trend days are mostly USD days.",
+    "overfit_risk": "medium",
+    "cost_risk": "medium",
+    "duplicate_of": null,
+    "notes_for_builder": "Implement the rules exactly as written. For each UTC date d with F.weekday(d) < 5: i07, i12, i16 = F.first_bar_at_or_after(m, dates, hh, mm) for p['window_start'], p['window_end'], p['exit_utc'] (F.parse_hhmm). The London window is bars i07..i12-1; never include bar i12 (it is the entry bar, so using it is look-ahead). Skip the day if i12 <= i07, if ts[i07] > 07:00 + max_delay_min, if ts[i12-1] < 12:00 - max_delay_min (compare bar timestamps), or if i12 >= m.n or ts[i12] > 12:00 + max_delay_min (sparse-bar guard, as in the oracle modules). O = bid_o[i07]; H = max(bid_h[i07:i12]); L = min(bid_l[i07:i12]); C = bid_c[i12-1]; R = H - L. ATR = daily.to_bars(F.atr_prev(daily, 20)) read at i12-1, which is in the same NY trading day as 12:00 UTC; skip if not finite or <= 0. Trade only if R >= k*ATR (then R > 0); long if (C - L)/R >= 1 - q, short if (C - L)/R <= q. Signal on bar i12-1: entry_long or entry_short, entry_type 0, sl_dist = p['m'] * R, tp_dist NaN. Set exit_long or exit_short on bar i16-1 only when i16 < m.n and i16-1 > i12-1, otherwise skip the day. The stop multiple is p['m']: do not bind it to a local called m, which is the Market. Read k, q, m and max_delay_min from p, keep every PARAMS default identical to the spec, and loop over days, not bars."
+   },
+   {
+    "slug": "gold_asia_session_physical_bid",
+    "verdict": "reject",
+    "reasons": [
+     "Duplicate of prior_flow_atlas: the atlas scanned XAUUSD on the Tokyo clock (no DST) with 30-minute to 8-hour windows starting every half hour on all weekdays, including exactly 08:00-16:00 and 09:00-17:00 JST = 23:00-07:00 and 00:00-08:00 UTC; neither reached even the watch list (design |t| >= 3.5) on mid prices before costs, and the strongest Asian-hours gold slot (01:30-02:30 UTC, mid t 5.9) lost after the atlas's costs as a trade (design -0.044 R, check -0.060 R). Do not re-slice Asian-hours gold.",
+     "Where the atlas did find Asian-hours gold strength in design it did not persist: the 4-hour windows Tokyo 08:30-12:30 and 11:00-15:00 JST (23:30-03:30 and 02:00-06:00 UTC; design t 3.6 and 4.1) fell to check t of +1.0 and -0.5, which is this hypothesis's own persistence kill.",
+     "Below the programme's bar for clock ideas: the scrap index requires any new clock or calendar idea to beat design t >= 3.7, but this pre-registration expects t >= 2.0 and kills only below t 1. A fixed-clock, every-weekday trade is a clock idea whatever the story about who trades when.",
+     "Costs eat the drift: a design mid-price |t| below 3.5 over about 1,600-2,000 days caps the gross drift at roughly 0.06-0.08 R per trade at s = 0.3-0.5 x ATR20, and the Asian-hours spread plus slippage costs about 0.03-0.10 R per round trip, so the after-cost avg R is about zero and +0.04 R with t >= 2 is very unlikely. The 23:00 UTC entry sits on the CME reopen in winter: buying the 23:00-23:30 UTC half hour lost about -0.1 R per trade after costs in the atlas's tradeable check although its mid-price drift was positive (design t 3.8).",
+     "Long-only gold with no control leg: gold rose about 58% over the 2018-2023 check period, which alone is worth roughly +0.015 to +0.025 R per 8-hour long at these stops, so a kill clause of 'check average negative' cannot separate a physical-demand flow from gold's bull market.",
+     "The time split behind the mechanism is not clean: Chinese gold also trades in the SGE and SHFE night sessions (about 12:00-18:30 UTC) and India's MCX trades into the New York morning, so physical buyers are active in London and New York hours too; the atlas's hour-by-hour map of gold already contains whatever such a split produces."
+    ],
+    "revisions": "None; rejected. An Asian-hours gold idea can only return conditioned on information the atlas did not scan (a market state, not a clock window), pre-registered to the atlas bar (design t >= 3.7), with a same-length non-Asian control leg so that gold's own drift is not mistaken for a flow.",
+    "overfit_risk": "high",
+    "cost_risk": "high",
+    "duplicate_of": "prior_flow_atlas",
+    "notes_for_builder": "Not to be built (rejected)."
+   }
+  ]
+ },
+ "overview": {
+  "hypotheses": {
+   "rejected": 1,
+   "scrap": 22
+  },
+  "trials": 84,
+  "holdout_touches": 0,
+  "spend_usd": 0.0
+ },
+ "goal_reached": false
+}

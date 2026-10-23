@@ -1,0 +1,151 @@
+{
+ "static": {
+  "ok": true,
+  "issues": []
+ },
+ "import": {
+  "ok": true,
+  "error": null,
+  "path": "D:\\Traders sir\\strategies\\auto\\fx_surprise_against_crowd.py"
+ },
+ "dynamic": {
+  "ok": true,
+  "issues": [],
+  "entries": 80,
+  "leak": {
+   "ok": true,
+   "truncation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 75000,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 135000,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "perturbation": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 75000,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 75000,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 135000,
+      "direction": 1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 135000,
+      "direction": -1.0,
+      "mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "determinism": {
+    "ok": true,
+    "mismatches": 0,
+    "first_mismatch": -1,
+    "fields": ""
+   },
+   "ext_release": {
+    "ok": true,
+    "probes": [
+     {
+      "k": 16,
+      "release": "2017-12-26T04:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 21758,
+      "release": "2018-11-08T15:30:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 43591,
+      "release": "2019-09-25T14:30:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 64456,
+      "release": "2020-07-28T13:30:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 85397,
+      "release": "2021-06-01T07:15:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 106896,
+      "release": "2022-04-11T06:00:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 128461,
+      "release": "2023-02-18T16:30:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     },
+     {
+      "k": 149993,
+      "release": "2023-12-29T20:30:00.000000",
+      "truncation_mismatches": 0,
+      "perturbation_mismatches": 0,
+      "first_mismatch": -1,
+      "fields": ""
+     }
+    ]
+   },
+   "n_entries": 80,
+   "aux_markets": [],
+   "ext_series": [
+    "calendar",
+    "cot"
+   ]
+  }
+ },
+ "ok": true
+}

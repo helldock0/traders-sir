@@ -1,0 +1,44 @@
+{
+ "slug": "gold_asia_session_physical_bid",
+ "title": "Gold rises during Asian hours: physical demand executes in Asia, paper selling in London and New York",
+ "family": "intraday_seasonality_metal",
+ "rationale": "Physical gold demand from China and India (jewellers, bullion banks pricing off the Shanghai Gold Exchange, retail) is executed during Asian trading hours, while the bulk of paper selling (ETF outflows, COMEX futures, London OTC) happens in London and New York hours. The two groups trade at different times of day, so the price can carry a persistent intraday pattern: a positive drift from the Asian open to the London open, and weaker or negative drift later, which is the documented bias around the London fixes. The other side is the Western paper seller who is simply not active at 01:00 UTC. The gold-fix fade and gold box breakouts in the scrap index are point-in-time trades at the fix or on a range break; this is a session-long directional bias. Gold is expensive to trade per hour of range in Asia (cost ratio about 0.1), so the stop is scaled to the daily ATR to keep cost per R near 5 percent.",
+ "markets": [
+  "XAUUSD"
+ ],
+ "timeframe": "M5",
+ "rules": "All times UTC. For each calendar date d: entry target time = d at entry_utc (23:00 or 00:00). The exit target time is exit_utc (07:00 or 08:00) on the next calendar day when entry_utc >= 12:00, otherwise on d. Signal a long market entry on the last bar before the entry target time, provided the first bar at or after the entry target is no more than max_delay_min (15) minutes after it (this skips weekends and holidays, when the next available bar is far away). The order fills at the open of the first bar at or after the entry target (ask). ATR = previous-20-trading-day average daily range (F.atr_prev on NY-close daily bars) known at the start of the trading day containing the entry bar; skip if not available. Stop: s * ATR below the fill. No take-profit. Exit: set the exit flag on the last bar before the exit target so the position closes at the open of the first bar at or after it; skip the day if that first exit bar is more than 15 minutes after the exit target. Long only, one position at a time. Parameters: entry_utc, exit_utc, s (stop in ATR units), max_delay_min = 15.",
+ "params": {
+  "entry_utc": "23:00",
+  "exit_utc": "07:00",
+  "s": 0.3,
+  "max_delay_min": 15
+ },
+ "grid": {
+  "entry_utc": [
+   "23:00",
+   "00:00"
+  ],
+  "exit_utc": [
+   "07:00",
+   "08:00"
+  ],
+  "s": [
+   0.3,
+   0.5
+  ]
+ },
+ "stage_a_market": "XAUUSD",
+ "pre_registered": {
+  "expected_design_t_min": 2.0,
+  "expected_avg_r": 0.04,
+  "min_trades_design_per_market": 300,
+  "kill_if": "Stage A: best design avg R <= 0 or design t < 1. Treat as dead if the check-period average is negative even when the design period passes, since the physical-demand structure must be persistent to be worth trading."
+ },
+ "similar_prior": [
+  "prior_fix_fades",
+  "prior_box_breakouts"
+ ],
+ "why_different": "Prior gold tests faded or followed the fix at a point in time or traded breakouts of a time box. This is a session-long long-only bias explained by who is active when (physical buyers in Asian hours, paper sellers later), not by a fix-time flow or a range break.",
+ "parent_slug": null
+}

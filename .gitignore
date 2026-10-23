@@ -1,0 +1,33 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets
+.env
+
+# Node
+tools/dukascopy/node_modules/
+tools/dukascopy/.dukascopy-cache/
+
+# Data (large, regenerable from Dukascopy)
+data/raw/
+data/m1/
+data/ticks/
+data/tf/
+data/_test/
+
+data/external/calendar_hf/forex_factory_cache.csv
+
+# Read-only clones of other repos (5.5 GB, already on GitHub)
+reference/
+
+# Local Claude Code permissions
+.claude/settings.local.json
+
+# Logs
+logs/
+*.log

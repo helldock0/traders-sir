@@ -1,0 +1,47 @@
+{
+  "slug": "jpy_cross_losscut_after_us_shock",
+  "title": "Forced losscut flow: short AUDJPY (NZDJPY, CADJPY) into the Tokyo pre-open after a US-session equity shock",
+  "family": "cross_asset_forced_liquidation",
+  "rationale": "Japanese retail margin accounts are the largest retail FX market in the world (GMO Click, DMM, SBI; about USD 1 trillion a month of volume) and are structurally long the high-yield yen crosses (AUDJPY, NZDJPY, and since 2022 USDJPY) for carry at 5-25x leverage. The brokers enforce an automatic losscut when margin falls below a maintenance ratio, and a large part of the retail book is managed during Tokyo hours. When US equities sell off hard during the New York session, the yen crosses fall with them overnight for Tokyo; the retail book opens the Tokyo morning sitting on losses it has not reacted to, and the losscut orders, margin calls and manual de-risking are executed in the 08:00-10:00 JST window. Who is on the other side: Tokyo-session dealers who buy the forced selling and hold the inventory, which is the pressure that shows up as continuation of the overnight move in the first Tokyo hours on exactly those days. This is the 'Mrs Watanabe forced unwind' documented on the 2007-08, 2015-08-24 and 2016-06-24 and 2024-08-05 episodes; the question here is whether it exists at a tradeable size on ordinary shock days (US100 down 0.75-1.5% in the cash session), which happen 10-20 times a year. On ordinary days Japanese retail are contrarian dip buyers, which is why unconditional Tokyo-open fades and follows are both zero (fx_session_rev, edge_hunt); the mechanism here only operates when the overnight loss is large enough to trigger forced selling, so it is conditioned on an external equity shock measured in the aux market, not on the cross's own move. Costs: AUDJPY median spread 0.9 pips plus 0.4 pips slippage against a 0.5 x ATR20 stop of about 40 pips, about 0.035 R, and the trade is a market order at 08:00 JST with a time exit, which a human can execute on a prop account. Critic revisions accepted before any run: DST-aware New York cash-session window; start level used directly as the denominator; k grid lowered to 0.5/0.75/1.0 for power; regime kill with 2022 removed; expected design t restated as 1.0-1.5 and cost as 0.05-0.08 R.",
+  "markets": [
+    "AUDJPY",
+    "NZDJPY",
+    "CADJPY"
+  ],
+  "timeframe": "M15",
+  "strategy_path": "strategies\\auto\\jpy_cross_losscut_after_us_shock.py",
+  "params": {
+    "k": 1.0,
+    "sl_atr": 0.5,
+    "exit_utc": "02:00"
+  },
+  "grid": {
+    "k": [
+      0.5,
+      0.75,
+      1.0
+    ],
+    "sl_atr": [
+      0.5,
+      1.0
+    ],
+    "exit_utc": [
+      "02:00",
+      "06:00"
+    ]
+  },
+  "stage_a": {
+    "market": "AUDJPY"
+  },
+  "pre_registered": {
+    "expected_design_t_min": 1.0,
+    "expected_avg_r": 0.08,
+    "min_trades_design_per_market": 40,
+    "kill_if": "(1) Stage A best design avg R on AUDJPY <= 0 or design t < 1. (2) Monotone response: at the same stop and exit, avg R(k=1.0) >= avg R(k=0.75) >= avg R(k=0.5) must hold; a violation of more than 0.02 R at any step is a kill (then the sign is noise, not a size-triggered liquidation). (3) Cross-market: NZDJPY and CADJPY both negative in stage B while AUDJPY is positive is a kill (one market's luck, not a retail-book effect). (4) Regime: check-period avg R with 2022 removed must be > 0 at the chosen combination (2022 supplies about a third of check shock days; a bear-market trend must not pass as losscut flow). Honest expectations: the design sample is small (about 121 / 79 Monday-Thursday shock days at k = 0.5 / 1.0 in 2012-2017, the US100 feed being clean from 2013), so the expected design t at the chosen point is 1.0-1.5 and this test is underpowered against the t >= 2 pass bar; a pass needs the pooled check (about 150+ trades at k = 1.0) and the walk-forward to carry the evidence. Cost is about 0.05-0.08 R per trade because the 23:00 UTC fill sits an hour after the New York rollover when spreads are wider; and automatic losscuts at Japanese brokers trigger in real time, so part of the forced selling may already be done before entry, which is a reason the effect could be small."
+  },
+  "costs": {},
+  "notes": "All times UTC unless stated. Bars: M15 on the primary yen cross; the auxiliary market USATECHIDXUSD (US100 CFD) is attached on M15 and read through F.aux_market with explicit close-time logic (or F.aux_window_change if the fixed fallback window is used).\n\nUS SHOCK (New York cash session, DST-aware): for each UTC date D compute the New York offset with the US rule (daylight saving from the second Sunday of March to the first Sunday of November: NY = UTC-4, otherwise UTC-5). t_start = 09:30 New York on D, t_end = 16:00 New York on D, both converted to UTC (13:30 and 20:00 UTC in summer, 14:30 and 21:00 UTC in winter). On the aux market a = F.aux_market(m, \"USATECHIDXUSD\"): start = searchsorted(a.ts, t_start, 'left') (first aux bar at or after t_start), end = searchsorted(a.close_times(), t_end, 'right') - 1 (last aux bar closed by t_end). Require end > start and both bars on UTC date D; otherwise no signal on D. shock_pct = 100 * (a.bid_c[end] / a.bid_o[start] - 1), using the window-start level directly. Acceptable fallback if the DST conversion cannot be done cleanly: a fixed 14:30-20:00 UTC window via F.aux_window_change(m, \"USATECHIDXUSD\", 14, 30, 20, 0) with the start level read from the aux bar at 14:30 UTC; the module docstring must say which was used.\n\nSIGNAL BAR: on each UTC date D whose weekday is Monday to Thursday, let S be the first primary bar whose close time is at or after 23:00 UTC on D and before 23:59 UTC on D (= 08:00 JST, one hour before the Tokyo open; this is already the next 17:00-New-York trading day). Require m.close_times()[S] >= t_end (the US close has happened). If no such bar exists, no trade on D. Attach shock_pct only to S. Condition: shock_pct <= -k (k in percent).\n\nENTRY: entry_short[S] = True, entry_type 0 (market at the next bar's open), valid_bars 1. One trade per UTC date; the executor ignores new entries while a position is open.\n\nSTOP: sl_dist[S] = sl_atr * ATR20_prev with ATR20_prev = F.atr_prev(F.daily_bars(m), 20) mapped to bar S (the daily ATR known at the start of the trading day that contains S). No trade if NaN or <= 0. tp_dist = NaN.\n\nEXIT: time exit at exit_utc (\"HH:MM\", F.parse_hhmm) on the next UTC date D+1: exit_short = True on the last bar whose close time is at or before exit_utc on D+1 and after the entry signal bar's close; the executor closes at the following bar's open. Safety net: max_bars[S] = number of M15 bars from S to 06:00 UTC on D+1 plus 4.\n\nFridays are excluded because there is no Tokyo session after a Friday US session; no longs, no other filters.",
+  "aux_markets": [
+    "USATECHIDXUSD"
+  ]
+}

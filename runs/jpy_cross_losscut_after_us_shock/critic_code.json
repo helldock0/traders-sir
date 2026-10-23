@@ -1,0 +1,20 @@
+{
+ "verdict": "approve",
+ "issues": [
+  {
+   "severity": "minor",
+   "where": "signals(): i_end = np.searchsorted(a_close, t_end, side=\"right\") - 1 ... ok &= (a.ts[i_end_c].astype(\"datetime64[D]\") == dates)",
+   "issue": "The shock window has no coverage check, only a same-date check. On US half-days, US holidays where the CFD trades a short session, and early aux data gaps, the 'cash-session' move is measured over a truncated window (for example 2011-09-22 ends at 19:15 UTC instead of 20:00; 2013-04-17 and 2017-07-03 end at 16:00; 2017-07-04 and 2022-02-21 are US holidays). A spot check over 2010-2023 on AUDJPY found 8 of 288 entries at k=1.0 and 10 of 535 at k=0.5 (about 2-3%) with the end bar closing more than 30 minutes before t_end or the start bar more than 30 minutes after t_start. This is what the rules literally say ('last aux bar closed by t_end'), so it is not a rule mismatch and not a leak.",
+   "fix": "Optional, and only if the Director accepts it as a data-hygiene clarification rather than a new knob: add ok &= (t_end - a_close[i_end_c] <= 30 min) & (a.ts[i_start_c] - t_start <= 30 min) as a fixed constant (not in GRID). Otherwise leave as is and note it in the report."
+  },
+  {
+   "severity": "minor",
+   "where": "signals(): exit_idx = np.searchsorted(m_close, next_us + exit_time, side=\"right\") - 1; guard 'xi > si'",
+   "issue": "If the primary market has no bars on D+1 before exit_utc (a holiday or data gap), xi falls back to a bar on D after S and the position closes after a bar or two instead of at exit_utc. The max_bars safety net does not cover this case because the early exit flag fires first. In the 2010-2017 AUDJPY spot check every entry had exactly 12 (02:00) or 28 (06:00) bars to the exit flag, so this case never came up there.",
+   "fix": "Optional: also require m_close[xi] > next_us (the exit bar closes on D+1) before setting exit_short[xi]; otherwise rely on max_bars."
+  }
+ ],
+ "lookahead_risk": "Low. shock_pct for date D uses only aux bars whose close time is at or before t_end (20:00 or 21:00 UTC). It is attached only to bar S, which closes in [23:00, 23:59) UTC and must have m_close[S] >= t_end. ATR is F.atr_prev mapped through daily.to_bars at S. S closes after 17:00 NY, so it belongs to the next trading day and ATR20_prev includes day D's full range, which is complete by then. The exit and max_bars indices are scheduling only and do not feed back into the entry decision. The DST helper uses only the calendar. The automated truncation, perturbation (primary and aux) and determinism probes all pass with 0 mismatches.",
+ "matches_rules": true,
+ "notes": "Verified: (1) _us_dst agrees with zoneinfo America/New_York at 15:00 local on every date from 2010 to 2026 (0 mismatches), so the window is 13:30-20:00 UTC in summer and 14:30-21:00 UTC in winter. The docstring correctly says the DST-aware window is used, not the fallback. (2) An independent recomputation of shock_pct for 2017-11-29 (winter, -1.62%) matches the module's construction. (3) On AUDJPY M15 for 2010-2017 at the defaults: 103 entries, all on the 22:45 UTC bar (close 23:00, market fill at the 23:00 open = 08:00 JST). exit_short is set on the 01:45 or 05:45 bar, so the close is at the 02:00 or 06:00 open. max_bars = (first bar at 06:00 on D+1 minus S) + 4 = 33, which works out to about 07:15 UTC, so it only acts as a safety net after the time exit. (4) Mon-Thu filter: weekday(dates) < 4. Side: shorts only, entry_type 0, valid_bars 1, tp NaN (default). sl_dist = sl_atr * ATR20_prev, with NaN or <= 0 skipped. (5) Every grid key (k, sl_atr, exit_utc) is read from p, and PARAMS has defaults for all keys used. The fixed constants (signal window, ny_open/close, safety extras, atr_n) are in PARAMS but not in the grid. Data note for the Director: US100 aux data starts 2011-09-18, so design-period trades start in late 2011 (103 trades at k=1.0 on AUDJPY in design, 288 over 2010-2023). The two minor items are optional hygiene fixes, not blockers."
+}

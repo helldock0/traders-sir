@@ -1,0 +1,21 @@
+{
+  "slug": "oracle_m3_usd_bid",
+  "title": "Month-end USD bid on the 3rd-last weekday (oracle replication)",
+  "family": "calendar_flow",
+  "rationale": "Corporate and fund month-end USD demand concentrates around the 11:00 UTC window on the third-last business day; documented in gj-strat flow atlas as the only month-end slot that survived costs.",
+  "markets": ["USDJPY", "EURUSD", "GBPUSD"],
+  "timeframe": "M1",
+  "strategy_path": "strategies/oracle/m3_usd_bid.py",
+  "params": {"entry_utc": "11:00", "exit_utc": "12:00", "side": "auto", "start": "2011-01-01"},
+  "grid": {"k": [1, 2, 3], "sl_atr": [0.25, 0.5]},
+  "stage_a": {"market": "USDJPY"},
+  "pre_registered": {
+    "expected_design_t_min": 2.0,
+    "expected_avg_r": 0.08,
+    "min_trades_per_market_design": 30,
+    "kill_if": "best design avg R on USDJPY <= 0 or design t < 1",
+    "prior_result": "gj-strat: USDJPY k=2 sl 0.25: 189 trades, +0.124 R, design t 2.11, check +0.21, holdout +0.02"
+  },
+  "costs": {"commission_per_lot_usd": 7.0, "slippage_pips": 0.2},
+  "notes": "Oracle spec used to validate the pipeline; the result is already known and does not count as a discovery."
+}

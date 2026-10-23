@@ -1,0 +1,68 @@
+{
+ "slug": "crowded_funds_surprise_unwind",
+ "title": "Crowded leveraged-fund positioning plus an adverse macro surprise: the multi-day unwind",
+ "family": "positioning_x_news_unwind",
+ "rationale": "Leveraged funds (CFTC Traders in Financial Futures) carry large directional currency positions for weeks; when a scheduled release surprises against the crowd (surprise_z at least 1 against the consensus, confirmed by the first 30 minutes of price), the crowd must cut: stop-losses, prime-broker VaR limits and risk committees act over one to three days, not within the hour, because funds reduce in slices and limits bind at the daily mark. So the initial reaction continues when positioning is extreme, while with neutral positioning the same surprise is absorbed in the first hour (this programme measured no drift after scheduled releases unconditionally: the liquidity-withdrawal study's news-inclusive arm and the NFP follow/fade tests were all within costs of zero, and the two-hour surprise-follow template on USDJPY made -0.04 R). Who is on the other side: dealers and asset managers absorbing the forced flow over several days, which is why the move is gradual and tradeable after the reaction window. Prior positioning tests (cot_positioning P1-P8) used positioning alone with weekly holds and no news trigger; this uses positioning as the state and the adverse surprise as the trigger, which is the mechanism by which crowded positions actually unwind.",
+ "markets": [
+  "EURUSD",
+  "GBPUSD",
+  "AUDUSD",
+  "USDJPY",
+  "USDCAD",
+  "NZDUSD",
+  "USDCHF"
+ ],
+ "aux_markets": [],
+ "ext_series": [
+  "cot",
+  "calendar"
+ ],
+ "timeframe": "M15",
+ "rules": "Let X be the pair's non-USD currency (EUR for EURUSD, JPY for USDJPY, ...). X-strength: for X/USD pairs (EURUSD, GBPUSD, AUDUSD, NZDUSD) X strengthens when the pair rises; for USD/X pairs (USDJPY, USDCAD, USDCHF) X strengthens when the pair falls.\nPositioning state: cot rows with market == X (F.ext_subset on e.column('market')); value = spec_net_oi (leveraged funds net / open interest); at each primary bar the latest released report via F.ext_asof. Percentile pct of the current value among the last p['rank_window'] released reports for X including the current one (rank computed row-wise on the cot subset, then carried to bars with ext_asof; use only reports with ts_avail at or before the bar's close). Crowded long X: pct >= p['pct_extreme']; crowded short X: pct <= 100 - p['pct_extreme']; neutral: 30 <= pct <= 70 (control). Rows are usable from their ts_avail (Friday 15:30 New York release), never from the Tuesday as-of date.\nTrigger: calendar rows with impact == 'high', time_known, currency in {'USD', X}, |surprise_z| >= p['z_min']; for releases sharing one ts_release keep the largest |surprise_z|. R = ts_release.\nReaction: ref = bid close of the last bar whose close time is strictly before R; rx = bid close of the first bar whose close time is at or after R + p['react_min'] minutes; reaction = rx - ref; require |reaction| >= p['react_atr_min'] x ATR20 (F.atr_prev(F.daily_bars(m), p['atr_n']) known at the day start). Adverse to the crowd: crowded long X and X weakened in the reaction, or crowded short X and X strengthened.\nEntry (arm 'hyp'): when the state is crowded and the reaction is adverse, trade in the direction of the reaction (short the pair if it fell, long if it rose): signal on the bar whose close is the first at or after R + react_min, market entry at the next bar's open. Stop = p['sl_atr'] x ATR20 from the fill, no target, time exit at the open of the first bar at or after the entry bar's open time + p['hold_h'] hours (derive max_bars from timestamps). One position at a time; a trigger while a position is open is skipped. Control arm 'neutral' (stage A only): the same trigger, reaction and trade direction with pct between 30 and 70 (positioning carries no pressure), expected about zero.\nGrid: pct_extreme 85 or 90, z_min 1.0 or 1.5, hold_h 24 or 48, sl_atr 1.0 or 1.5; the spec grid carries arm = 'hyp' only and the stage A grid adds the neutral control (the Director amends the spec after the Critic review). Primary EURUSD (deepest futures market, 2010 COT history; first signals in 2011 once 52 reports exist). Compare quantised quantities with a 1e-9 relative tolerance.",
+ "params": {
+  "pct_extreme": 85,
+  "z_min": 1.0,
+  "hold_h": 24,
+  "sl_atr": 1.0,
+  "arm": "hyp",
+  "react_min": 30,
+  "react_atr_min": 0.1,
+  "rank_window": 156,
+  "atr_n": 20,
+  "start": "2010-01-01"
+ },
+ "grid": {
+  "pct_extreme": [
+   85,
+   90
+  ],
+  "z_min": [
+   1.0,
+   1.5
+  ],
+  "hold_h": [
+   24,
+   48
+  ],
+  "sl_atr": [
+   1.0,
+   1.5
+  ]
+ },
+ "stage_a_market": "EURUSD",
+ "pre_registered": {
+  "expected_design_t_min": 1.5,
+  "expected_avg_r": 0.3,
+  "min_trades_design_per_market": 60,
+  "expected_trades_per_month": 1.0,
+  "kill_if": "On EURUSD in design: the best hyp cell (by t) has avg R <= 0.10 or t < 1; or hyp minus the neutral control at the same settings is below 0.10 R (then positioning adds nothing to the post-release drift, which is measured at zero); or the best hyp cell has fewer than 60 design trades. Speed score at the expectation: 0.3 x sqrt(1) = 0.3 per market; seven pairs pooled share the USD releases, so the pooled score is about 0.5 at best; this leg counts toward the 60-day goal only inside the basket, which the basket step measures."
+ },
+ "similar_prior": [
+  "prior_cot_positioning (crowding fades and follows with weekly holds, no news trigger; P4 added VIX, mixed signs)",
+  "prior_fomc_cycle and prior_cb_drift (event drifts without positioning, zero)",
+  "edge_hunt NFP follow/fade 08:45-12:00 (zero)",
+  "fx_liquidity_withdrawal_reversal (news-inclusive one-hour fade no different from non-news: no unconditional post-release drift)"
+ ],
+ "why_different": "Positioning is used as the state that makes the crowd forced sellers and the surprise as the trigger; prior work tested each alone. The horizon is one to three days (the forced de-risking window), not the first hours; the neutral-positioning control separates the positioning effect from the measured-zero unconditional drift.",
+ "parent_slug": null
+}

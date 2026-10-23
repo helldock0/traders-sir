@@ -1,0 +1,121 @@
+# Prop-firm rule profiles for the prop-rule simulator.
+# Every number here must be checked against the firm's official help centre before it is relied on;
+# aggregator pages disagree with each other and firms change terms. "verify" marks unconfirmed items.
+#
+# Field notes
+#   max_loss_model: static  = measured from the initial balance
+#                   trailing = measured from the balance high-water mark, frozen once it reaches initial + max_loss_pct
+#   daily_loss_basis: balance = start-of-day balance; balance_or_equity = greater of the two at day start
+#   daily_loss_includes_floating: open P/L counts toward the daily limit
+
+default: alpha_swing_10k
+
+alpha_swing_10k:
+  firm: Alpha Capital Group
+  plan: Alpha Swing
+  account_size: 10000
+  currency: USD
+  phases:
+    - name: phase1
+      profit_target_pct: 10.0
+      max_daily_loss_pct: 5.0
+      max_loss_pct: 10.0
+      min_trading_days: 3
+    - name: phase2
+      profit_target_pct: 5.0
+      max_daily_loss_pct: 5.0
+      max_loss_pct: 10.0
+      min_trading_days: 3
+  funded:
+    max_daily_loss_pct: 5.0
+    max_loss_pct: 10.0
+  max_loss_model: static
+  daily_loss_basis: balance            # ACG help centre 2026-10-14 (articles/6934210): Alpha Swing is balance-based, 5%
+  daily_loss_includes_floating: true   # ACG help centre: breaches are applied on open trades, i.e. on current equity, whatever the basis
+  daily_reset_timezone: America/New_York
+  daily_reset_offset_hours: 7          # resets 00:00 server time; ACG terms: GMT+2, GMT+3 in US daylight saving = 17:00 New York (MT5 server ACGMarkets-Main showed UTC+3 on 2026-10-14)
+  time_limit_days: null
+  leverage: {fx: 30, index: 10, metal: 10}   # verify index/metal
+  weekend_holding: true
+  news_trading: true
+  notes: >
+    Rules as stated in gj-strat results/alpha_hunt/CHARTER.md (2026-10-11), consistent with
+    tradetanto.com and propfirmmap.com listings. The user's live account. 2026-10-14: the daily loss
+    includes floating P/L per the ACG help centre, so the 'floating' rows of runs/basket/speed_report.md
+    are the operative numbers. ACG MT5 (server ACGMarkets-Main, hedge accounts, symbols suffixed .pro,
+    USDJPY.pro 3 digits, contract 100000, stops level 0, market execution, FOK/IOC filling, sessions
+    00:10-23:55 server time Mon-Fri, swap x3 on Wednesday). EAs: MT5 only, pre-approval by emailing
+    the EX5; only risk-management and trade-assistance EAs are approved; EAs that open trades without
+    human oversight are refused (help.alphacapitalgroup.uk articles/6934236).
+
+alpha_pro_10k:
+  firm: Alpha Capital Group
+  plan: Alpha Pro
+  account_size: 10000
+  currency: USD
+  phases:
+    - {name: phase1, profit_target_pct: 10.0, max_daily_loss_pct: 5.0, max_loss_pct: 10.0, min_trading_days: 3}
+    - {name: phase2, profit_target_pct: 5.0, max_daily_loss_pct: 5.0, max_loss_pct: 10.0, min_trading_days: 3}
+  funded: {max_daily_loss_pct: 5.0, max_loss_pct: 10.0}
+  max_loss_model: static
+  daily_loss_basis: balance
+  daily_loss_includes_floating: true
+  daily_reset_timezone: UTC            # verify
+  time_limit_days: null
+  leverage: {fx: 100, index: 20, metal: 20}  # verify index/metal
+  weekend_holding: false               # verify
+  news_trading: true
+
+alpha_one_10k:
+  firm: Alpha Capital Group
+  plan: Alpha One (1-step)
+  account_size: 10000
+  currency: USD
+  phases:
+    - {name: phase1, profit_target_pct: 10.0, max_daily_loss_pct: 4.0, max_loss_pct: 6.0, min_trading_days: 1}
+  funded: {max_daily_loss_pct: 4.0, max_loss_pct: 6.0}
+  max_loss_model: trailing
+  daily_loss_basis: balance_or_equity
+  daily_loss_includes_floating: true
+  daily_reset_timezone: UTC            # verify
+  time_limit_days: null
+  leverage: {fx: 100, index: 20, metal: 20}  # verify
+  weekend_holding: false               # verify
+  news_trading: true
+
+alpha_three_10k:
+  firm: Alpha Capital Group
+  plan: Alpha Three (3-step)
+  account_size: 10000
+  currency: USD
+  phases:
+    - {name: phase1, profit_target_pct: 8.0, max_daily_loss_pct: 4.0, max_loss_pct: 6.0, min_trading_days: 1}
+    - {name: phase2, profit_target_pct: 4.0, max_daily_loss_pct: 4.0, max_loss_pct: 6.0, min_trading_days: 1}
+    - {name: phase3, profit_target_pct: 4.0, max_daily_loss_pct: 4.0, max_loss_pct: 6.0, min_trading_days: 1}
+  funded: {max_daily_loss_pct: 4.0, max_loss_pct: 6.0}
+  max_loss_model: static
+  daily_loss_basis: balance_or_equity
+  daily_loss_includes_floating: true
+  daily_reset_timezone: UTC            # verify
+  time_limit_days: null
+  leverage: {fx: 100, index: 20, metal: 20}  # verify
+  weekend_holding: false               # verify
+  news_trading: true
+
+ftmo_100k:
+  firm: FTMO
+  plan: FTMO Challenge (2-step)
+  account_size: 100000
+  currency: USD
+  phases:
+    - {name: phase1, profit_target_pct: 10.0, max_daily_loss_pct: 5.0, max_loss_pct: 10.0, min_trading_days: 4}
+    - {name: phase2, profit_target_pct: 5.0, max_daily_loss_pct: 5.0, max_loss_pct: 10.0, min_trading_days: 4}
+  funded: {max_daily_loss_pct: 5.0, max_loss_pct: 10.0}
+  max_loss_model: static
+  daily_loss_basis: balance
+  daily_loss_includes_floating: true
+  daily_reset_timezone: Europe/Prague
+  time_limit_days: null
+  leverage: {fx: 100, index: 20, metal: 20}
+  weekend_holding: false               # Standard account; Swing account allows it
+  news_trading: false                  # Standard account restricts trading around high-impact news

@@ -1,0 +1,12 @@
+# When is the research goal met? Set by the user on 2026-10-14: a strategy or basket is wanted only if it passes the
+# challenge within about 60 days; slower edges are kept on record (runs/basket) but not traded on the challenge.
+# Evaluated on the best basket of good strategies, combined with the parked USDJPY legs in runs/basket/legs, under the
+# default prop profile, challenges started on every trading day from `window` on.
+objective: pass within 60 days
+pass_le_2m_min_pct: 50.0           # share of challenge starts that pass both phases within 60 days (2 x 30.4 days)
+fail_le_2m_max_pct: 15.0           # share that lose the account within 60 days
+pass_eventually_min_pct: 60.0      # the basket must still be a real edge, not a lottery ticket
+rank_by: pass_le_2m_pct            # among baskets meeting the constraints, higher is better
+window: "2018"
+# previous objective (2026-10-11 to 2026-10-14, kept for reference): pass_le_3m >= 25, fail_le_6m <= 35,
+# months_per_funded_account <= 6 on the 2018 window; the parked basket met it (74% pass eventually, 5.8 months).

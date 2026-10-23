@@ -1,0 +1,11 @@
+* text=auto
+*.pdf binary
+*.png binary
+*.jpg binary
+*.parquet binary
+*.sqlite binary
+*.xls binary
+*.xlsx binary
+*.ex5 binary
+*.gz binary
+*.zip binary
